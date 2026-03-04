@@ -667,13 +667,35 @@ async function fetchCSV(sheet) {
   const text = await res.text();
   const lines = text.trim().split('\n').slice(1);
   return lines.map(line => {
-    const cols = line.split(',').map(c => c.replace(/^"|"$/g,'').trim());
-    // Convert DD/MM/YYYY to YYYY-MM-DD
-    if (cols[0] && cols[0].match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-      const [d,m,y] = cols[0].split('/');
-      cols[0] = `${y}-${m}-${d}`;
+    // Parse CSV respecting quoted fields (fields may contain commas)
+    const cols = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { inQ = !inQ; }
+      else if (ch === ',' && !inQ) { cols.push(cur); cur = ''; }
+      else { cur += ch; }
     }
-    return cols;
+    cols.push(cur);
+
+    // Clean each value: remove spaces, non-breaking spaces, apostrophes, convert , to .
+    const clean = cols.map(c => c
+      .replace(/[\u00a0\u202f\u2009']/g, '') // remove non-breaking/narrow spaces
+      .replace(/â€¯/g, '')                        // remove corrupted narrow space
+      .replace(/,/g, '.')                          // Swiss decimal comma to dot
+      .trim()
+    );
+
+    // Convert DD/MM/YYYY to YYYY-MM-DD
+    if (clean[0] && clean[0].match(/^\d{2}\.\d{2}\.\d{4}$/)) {
+      const [d,m,y] = clean[0].split('.');
+      clean[0] = `${y}-${m}-${d}`;
+    } else if (clean[0] && clean[0].match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+      const [d,m,y] = clean[0].split('/');
+      clean[0] = `${y}-${m}-${d}`;
+    }
+
+    return clean;
   });
 }
 
@@ -684,7 +706,7 @@ async function init() {
   // LPP
   try {
     const rows = await fetchCSV('lpp');
-    const parsed = rows.map(c=>({date:c[0],epargne:parseFloat(c[1])||0,interets:parseFloat(c[2])||0,rachat:parseFloat(c[3])||0,total:parseFloat(c[4])||0})).filter(d=>d.date&&d.total>0);
+    const parsed = rows.map(c=>({date:c[0],epargne:parseFloat(c[1])||0,interets:parseFloat(c[2])||0,rachat:parseFloat(c[3])||0,total:parseFloat(c[5])||0})).filter(d=>d.date&&d.total>0);
     if (parsed.length) { lppData = parsed; loaded++; }
   } catch(e) {}
 
