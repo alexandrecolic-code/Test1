@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Finances VF</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { height:100%; }
+
+:root {
+  --bg:      #0c0c0f;
+  --bg2:     #121215;
+  --bg3:     #1a1a1f;
+  --card:    #14141a;
+  --border:  #252530;
+  --text:    #e2e2ec;
+  --muted:   #5a5a72;
+  --muted2:  #3a3a50;
+  --grid:    #1a1a1f;
+}
+body.light {
+  --bg:      #f4f4f8;
+  --bg2:     #ffffff;
+  --bg3:     #eaeaf0;
+  --card:    #ffffff;
+  --border:  #e0e0ea;
+  --text:    #1a1a2e;
+  --muted:   #8888a8;
+  --muted2:  #c0c0d8;
+  --grid:    #f0f0f6;
+}
+
+body { font-family:'Roboto',sans-serif; background:var(--bg); color:var(--text); display:flex; flex-direction:column; min-height:100vh; transition:background .3s, color .3s; }
+
+/* ── HEADER ── */
+.header { background:var(--bg2); border-bottom:1px solid var(--border); padding:14px 16px; text-align:center; flex-shrink:0; }
+.header-title { font-size:13px; font-weight:500; letter-spacing:0.5px; }
+.header-status { font-size:10px; margin-top:3px; color:var(--muted); }
+
+/* ── TABS ── */
+.tabs { display:flex; background:var(--bg2); border-bottom:1px solid var(--border); flex-shrink:0; }
+.tab { flex:1; padding:12px 8px; text-align:center; font-size:12px; font-weight:500; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; transition:all .2s; }
+.tab.active { color:var(--text); border-bottom-color:#4d9fff; }
+.tab-icon { font-size:16px; display:block; margin-bottom:2px; }
+
+/* ── PAGES ── */
+.page { display:none; flex:1; overflow-y:auto; padding-bottom:20px; }
+.page.active { display:block; }
+.content { padding:16px; max-width:600px; margin:0 auto; }
+
+/* ── BOTTOM NAV ── */
+.bottom-nav { display:flex; background:var(--bg2); border-top:1px solid var(--border); flex-shrink:0; position:sticky; bottom:0; }
+.nav-btn { flex:1; padding:12px 4px 10px; text-align:center; font-size:11px; color:var(--muted); cursor:pointer; border:none; background:none; font-family:'Roboto',sans-serif; transition:color .2s; }
+.nav-btn.active { color:#4d9fff; }
+.nav-btn .nav-icon { font-size:20px; display:block; margin-bottom:2px; }
+
+/* ── HERO ── */
+.hero { border:1px solid var(--border); border-radius:20px; padding:20px; margin-bottom:12px; position:relative; overflow:hidden; }
+.hero-lpp { background:var(--card); }
+.hero-cash { background:var(--card); }
+.hero::after { content:''; position:absolute; top:-40px; right:-40px; width:160px; height:160px; border-radius:50%; pointer-events:none; }
+.hero-lpp::after { background:radial-gradient(circle,rgba(77,159,255,.06) 0%,transparent 70%); }
+.hero-cash::after { background:radial-gradient(circle,rgba(52,211,153,.06) 0%,transparent 70%); }
+.hero-label { font-size:10px; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); margin-bottom:6px; }
+.hero-label .accent-lpp { color:#4d9fff; }
+.hero-label .accent-cash { color:#34d399; }
+.hero-value { font-size:36px; font-weight:700; color:white; letter-spacing:-1px; line-height:1; }
+.hero-value small { font-size:18px; color:var(--muted); font-weight:300; }
+.hero-meta { display:flex; margin-top:14px; padding-top:14px; border-top:1px solid var(--border); }
+.meta-item { flex:1; }
+.meta-label { font-size:9px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:3px; }
+.meta-value { font-size:11px; font-weight:500; }
+
+/* ── PERIODS ── */
+.periods { display:flex; gap:6px; margin-bottom:12px; }
+.period-btn { flex:1; padding:8px 4px; background:var(--bg3); border:1px solid var(--border); border-radius:10px; color:var(--muted); font-family:'Roboto',sans-serif; font-size:11px; cursor:pointer; transition:all .2s; }
+.period-btn.active { background:#1d6fe8; border-color:#4d9fff; color:white; }
+
+/* ── CARDS ── */
+.card { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:16px; margin-bottom:12px; }
+.card:last-child { margin-bottom:0; }
+.card-title { font-size:10px; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); margin-bottom:14px; }
+
+/* ── SPLIT BARS ── */
+.split-row { margin-bottom:14px; }
+.split-row:last-child { margin-bottom:0; }
+.split-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; }
+.split-left { display:flex; align-items:center; gap:6px; font-size:11px; }
+.split-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.split-right { font-size:12px; }
+.split-pct { font-size:10px; color:var(--muted); margin-left:6px; }
+.split-bar-bg { height:5px; background:var(--bg3); border-radius:3px; overflow:hidden; }
+.split-bar-fill { height:100%; border-radius:3px; transition:width 1s ease; }
+
+/* ── SAVING BADGE ── */
+.saving-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:500; margin-top:6px; }
+.saving-good { background:rgba(52,211,153,0.12); color:#34d399; }
+.saving-bad  { background:rgba(248,113,113,0.12); color:#f87171; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;">
+  <div style="flex:1"></div>
+  <div style="text-align:center;flex:2">
+    <div class="header-title">Finances VF</div>
+    <div class="header-status" id="globalStatus">⏳ Chargement…</div>
+  </div>
+  <div style="flex:1;display:flex;justify-content:flex-end">
+    <button onclick="toggleTheme()" id="themeBtn" style="background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:6px 12px;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:Roboto,sans-serif;font-size:11px;color:var(--muted);transition:all .2s;">
+      <span id="themeIcon">☀️</span>
+    </button>
+  </div>
+</div>
+
+<!-- Page LPP -->
+<div class="page active" id="page-lpp">
+  <div class="content">
+    <div class="hero hero-lpp">
+      <div class="hero-label">Total LPP · <span class="accent-lpp" id="lppMonth">—</span></div>
+      <div class="hero-value"><small>CHF </small><span id="lppVal">—</span></div>
+      <div class="hero-meta">
+        <div class="meta-item"><div class="meta-label">Épargne</div><div class="meta-value" style="color:#34d399" id="lppEpargne">—</div></div>
+        <div class="meta-item"><div class="meta-label">Intérêts</div><div class="meta-value" style="color:#fb923c" id="lppInterets">—</div></div>
+        <div class="meta-item"><div class="meta-label">Rachats</div><div class="meta-value" style="color:#60a5fa" id="lppRachats">—</div></div>
+        <div class="meta-item"><div class="meta-label">Retrait</div><div class="meta-value" style="color:#f87171" id="lppRetrait">—</div></div>
+      </div>
+    </div>
+    <div class="periods" id="lppPeriods">
+      <button class="period-btn" onclick="setLppPeriod('ytd',this)">YTD</button>
+      <button class="period-btn" onclick="setLppPeriod('1y',this)">1 an</button>
+      <button class="period-btn" onclick="setLppPeriod('5y',this)">5 ans</button>
+      <button class="period-btn active" onclick="setLppPeriod('all',this)">Tout</button>
+    </div>
+    <div class="card"><div class="card-title">Évolution du capital</div><div style="position:relative;height:160px"><canvas id="lppAreaChart"></canvas></div></div>
+    <div class="card"><div class="card-title">Versements mensuels</div><div style="position:relative;height:140px"><canvas id="lppBarChart"></canvas></div></div>
+    <div class="card"><div class="card-title">Répartition cumulée</div><div id="lppSplit"></div></div>
+  </div>
+</div>
+
+<!-- Page Cash -->
+<div class="page" id="page-cash">
+  <div class="content">
+    <div class="hero hero-cash">
+      <div class="hero-label">Cash disponible · <span class="accent-cash" id="cashMonth">—</span></div>
+      <div class="hero-value"><small>CHF </small><span id="cashVal">—</span></div>
+      <div class="hero-meta">
+        <div class="meta-item"><div class="meta-label">Salaires</div><div class="meta-value" style="color:#34d399" id="cashSalaires">—</div></div>
+        <div class="meta-item"><div class="meta-label">Dépenses</div><div class="meta-value" style="color:#f87171" id="cashDepenses">—</div></div>
+        <div class="meta-item"><div class="meta-label">Commun</div><div class="meta-value" style="color:#fb923c" id="cashCommun">—</div></div>
+        <div class="meta-item"><div class="meta-label">Rachats LPP</div><div class="meta-value" style="color:#60a5fa" id="cashRachats">—</div></div>
+        <div class="meta-item"><div class="meta-label">Saving moy.</div><div class="meta-value" style="color:#4d9fff" id="cashSaving">—</div></div>
+      </div>
+    </div>
+    <div class="periods" id="cashPeriods">
+      <button class="period-btn" onclick="setCashPeriod('ytd',this)">YTD</button>
+      <button class="period-btn" onclick="setCashPeriod('1y',this)">1 an</button>
+      <button class="period-btn" onclick="setCashPeriod('5y',this)">5 ans</button>
+      <button class="period-btn active" onclick="setCashPeriod('all',this)">Tout</button>
+    </div>
+    <div class="card"><div class="card-title">Évolution du cash</div><div style="position:relative;height:160px"><canvas id="cashLineChart"></canvas></div></div>
+    <div class="card"><div class="card-title">Saving mensuel <span style="color:var(--muted);font-size:9px;margin-left:4px;">objectif CHF 600</span></div><div style="position:relative;height:150px"><canvas id="cashSavingChart"></canvas></div></div>
+  </div>
+</div>
+
+
+<!-- Page Total -->
+<div class="page" id="page-total">
+  <div class="content">
+    <div class="hero" style="background:var(--card);border:1px solid var(--border);">
+      <div style="position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:radial-gradient(circle,rgba(251,146,60,.06) 0%,transparent 70%);border-radius:50%;pointer-events:none"></div>
+      <div class="hero-label">Patrimoine net · <span style="color:#fb923c" id="totalMonth">—</span></div>
+      <div class="hero-value"><small>CHF </small><span id="totalVal">—</span></div>
+      <div class="hero-meta">
+        <div class="meta-item"><div class="meta-label">LPP</div><div class="meta-value" style="color:#4d9fff" id="totalLpp">—</div></div>
+        <div class="meta-item"><div class="meta-label">Cash</div><div class="meta-value" style="color:#34d399" id="totalCash">—</div></div>
+        <div class="meta-item"><div class="meta-label">Taux épargne</div><div class="meta-value" style="color:#fb923c" id="totalTaux">—</div></div>
+        <div class="meta-item"><div class="meta-label">Progression</div><div class="meta-value" style="color:#60a5fa" id="totalProg">—</div></div>
+      </div>
+    </div>
+
+    <div class="periods" id="totalPeriods">
+      <button class="period-btn" onclick="setTotalPeriod('ytd',this)">YTD</button>
+      <button class="period-btn" onclick="setTotalPeriod('1y',this)">1 an</button>
+      <button class="period-btn" onclick="setTotalPeriod('5y',this)">5 ans</button>
+      <button class="period-btn active" onclick="setTotalPeriod('all',this)">Tout</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Évolution du patrimoine</div>
+      <div style="position:relative;height:200px"><canvas id="totalBarChart"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Répartition</div>
+      <div id="totalSplit"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Meilleur saving mensuel</div>
+      <div id="totalBestMonths"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <button class="nav-btn active" id="nav-lpp" onclick="showPage('lpp')">
+    <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="3"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg></span>LPP
+  </button>
+  <button class="nav-btn" id="nav-cash" onclick="showPage('cash')">
+    <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="3"/><circle cx="12" cy="12" r="3"/><path d="M2 10h3M19 10h3M2 14h3M19 14h3"/></svg></span>Cash
+  </button>
+  <button class="nav-btn" id="nav-total" onclick="showPage('total')">
+    <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span>Total
+  </button>
+</div>
+
+<script>
+// ════════════════════════════════════════
+//  CONFIG
+// ════════════════════════════════════════
+const SHEET_ID = '1veNFl6D33IZojM4OztYz88LLjfR4DgycaWJQOoK1viU';
+const CASH_SOLDE_INITIAL = 43420.18;   // ← ton solde cash au 01.01.2024
+const SAVING_OBJECTIF    = 600;
+
+const C = {
+  epargne:'#34d399', interets:'#fb923c', rachat:'#60a5fa',
+  lpp:'#4d9fff', rouge:'#f87171', muted:'#5a5a72', bg3:'#1a1a1f'
+};
+
+// ════════════════════════════════════════
+//  DEMO DATA
+// ════════════════════════════════════════
+const DEMO_LPP = [
+  { date:'2023-12-01', epargne:0,       interets:0,     rachat:0, retrait:0,    total:48558 },
+  { date:'2024-01-01', epargne:1381.25, interets:50.63, rachat:0, retrait:0,    total:49989.88 },
+  { date:'2024-02-01', epargne:1381.25, interets:50.63, rachat:0, retrait:0,    total:51421.76 },
+  { date:'2024-03-01', epargne:1381.25, interets:50.63, rachat:0, retrait:0,    total:52853.64 },
+  { date:'2024-04-01', epargne:1381.25, interets:50.63, rachat:0, retrait:0,    total:54285.52 },
+  { date:'2024-05-01', epargne:1381.25, interets:50.63, rachat:0, retrait:0,    total:55717.40 },
+  { date:'2024-06-01', epargne:1381.25, interets:50.63, rachat:0, retrait:0,    total:57149.28 },
+  { date:'2024-07-01', epargne:1381.25, interets:50.63, rachat:0, retrait:0,    total:58581.16 },
+  { date:'2024-08-01', epargne:1381.25, interets:50.63, rachat:0, retrait:0,    total:60013.04 },
+  { date:'2024-09-01', epargne:1381.25, interets:50.63, rachat:0, retrait:0,    total:61444.92 },
+  { date:'2024-10-01', epargne:1381.25, interets:50.63, rachat:5000, retrait:0, total:67876.80 },
+  { date:'2024-11-01', epargne:1381.25, interets:50.63, rachat:0, retrait:0,    total:69308.68 },
+  { date:'2024-12-01', epargne:1381.25, interets:55.85, rachat:0, retrait:0,    total:70745.78 },
+  { date:'2025-01-01', epargne:1381.25, interets:74.80, rachat:0, retrait:0,    total:72201.83 },
+  { date:'2025-02-01', epargne:1381.25, interets:74.80, rachat:0, retrait:0,    total:73657.88 },
+  { date:'2025-03-01', epargne:1381.25, interets:74.80, rachat:0, retrait:0,    total:75113.93 },
+  { date:'2025-04-01', epargne:1491.65, interets:74.80, rachat:8000, retrait:0, total:84680.38 },
+  { date:'2025-05-01', epargne:1436.50, interets:74.80, rachat:0, retrait:0,    total:86191.68 },
+  { date:'2025-06-01', epargne:1436.50, interets:74.80, rachat:0, retrait:0,    total:87702.98 },
+  { date:'2025-07-01', epargne:1436.50, interets:74.80, rachat:0, retrait:0,    total:89214.28 },
+  { date:'2025-08-01', epargne:1436.50, interets:74.80, rachat:0, retrait:0,    total:90725.58 },
+  { date:'2025-09-01', epargne:1436.50, interets:74.80, rachat:0, retrait:0,    total:92236.88 },
+  { date:'2025-10-01', epargne:1436.50, interets:74.80, rachat:0, retrait:0,    total:93748.18 },
+  { date:'2025-11-01', epargne:1436.50, interets:74.80, rachat:0, retrait:0,    total:95259.48 },
+  { date:'2025-12-01', epargne:1436.50, interets:74.80, rachat:0, retrait:67000, total:96770.78 },
+  { date:'2026-01-01', epargne:1386.50, interets:25.10, rachat:0, retrait:0,    total:98182.38 },
+  { date:'2026-02-01', epargne:1436.50, interets:25.10, rachat:0, retrait:0,    total:99643.98 },
+];
+
+// Demo salaires (25 de chaque mois)
+const DEMO_SALAIRES = [
+  {date:'2024-01-25',montant:5800},{date:'2024-02-25',montant:5800},{date:'2024-03-25',montant:5800},
+  {date:'2024-04-25',montant:5800},{date:'2024-05-25',montant:5800},{date:'2024-06-25',montant:5800},
+  {date:'2024-07-25',montant:5800},{date:'2024-08-25',montant:5800},{date:'2024-09-25',montant:5800},
+  {date:'2024-10-25',montant:5800},{date:'2024-11-25',montant:5800},{date:'2024-12-25',montant:11600},
+  {date:'2025-01-25',montant:6100},{date:'2025-02-25',montant:6100},{date:'2025-03-25',montant:6100},
+  {date:'2025-04-25',montant:6100},{date:'2025-05-25',montant:6100},{date:'2025-06-25',montant:6100},
+  {date:'2025-07-25',montant:6100},{date:'2025-08-25',montant:6100},{date:'2025-09-25',montant:6100},
+  {date:'2025-10-25',montant:6100},{date:'2025-11-25',montant:6100},{date:'2025-12-25',montant:12200},
+  {date:'2026-01-25',montant:6100},{date:'2026-02-25',montant:6100},
+];
+
+// Demo dépenses (total par jour)
+const DEMO_DEPENSES = (() => {
+  const deps = [];
+  const start = new Date('2024-01-01');
+  const end   = new Date('2026-02-28');
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate()+1)) {
+    if (Math.random() > 0.3) {
+      const amt = Math.round((40 + Math.random()*160)*10)/10;
+      deps.push({ date: d.toISOString().slice(0,10), montant: amt });
+    }
+  }
+  return deps;
+})();
+
+// ════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════
+let lppData      = DEMO_LPP;
+let salairesData = DEMO_SALAIRES;
+let depensesData = DEMO_DEPENSES;
+let lppPeriod    = 'all';
+let cashPeriod   = 'all';
+
+let lppAreaC = null, lppBarC = null;
+let cashLineC = null, cashSavingC = null;
+
+// ════════════════════════════════════════
+//  UTILS
+// ════════════════════════════════════════
+const fmt     = n => n.toLocaleString('fr-CH', {minimumFractionDigits:0, maximumFractionDigits:0});
+const fmtDate = s => new Date(s).toLocaleDateString('fr-CH', {month:'short', year:'2-digit'});
+
+function filterPeriod(data, period, dateKey='date') {
+  if (period === 'all') return data;
+  const c = new Date();
+  if (period === 'ytd') c.setMonth(0,1);
+  else if (period === '1y') c.setFullYear(c.getFullYear()-1);
+  else if (period === '5y') c.setFullYear(c.getFullYear()-5);
+  return data.filter(d => new Date(d[dateKey]) >= c);
+}
+
+function monthKey(dateStr) {
+  return dateStr.slice(0,7); // "2024-01"
+}
+
+function tooltipOpts(lpp=true, showTotal=false) {
+  return {
+    backgroundColor: document.body.classList.contains('light') ? '#ffffff' : '#1a1a25',
+    borderColor:     document.body.classList.contains('light') ? '#e0e0ea' : '#3a3a50',
+    borderWidth:1,
+    titleColor: lpp ? '#4d9fff' : '#34d399',
+    bodyColor:'#e2e2ec',
+    titleFont:{family:'Roboto',size:11}, bodyFont:{family:'Roboto',size:11},
+    footerFont:{family:'Roboto',size:12, weight:'bold'},
+    footerColor:'#ffffff',
+    callbacks:{
+      label: ctx => ctx.raw > 0 ? `${ctx.dataset.label}: CHF ${fmt(ctx.raw)}` : null,
+      footer: showTotal ? items => {
+        let total = 0;
+        items.forEach(i => {
+          if (i.dataset.label === 'Retrait') total -= (i.raw||0);
+          else total += (i.raw||0);
+        });
+        return `Total  CHF ${fmt(total)}`;
+      } : undefined
+    }
+  };
+}
+
+// ════════════════════════════════════════
+//  NAV
+// ════════════════════════════════════════
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+  if (name === 'lpp')  renderLpp();
+  if (name === 'cash') renderCash();
+  if (name === 'total') renderTotal();
+}
+
+// ════════════════════════════════════════
+//  LPP
+// ════════════════════════════════════════
+function setLppPeriod(p, btn) {
+  lppPeriod = p;
+  document.querySelectorAll('#page-lpp .period-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderLpp();
+}
+
+function renderLpp() {
+  const data    = lppData.slice(1);
+  const fil     = filterPeriod(data, lppPeriod);
+  const latest  = lppData[lppData.length-1];
+  const prev    = lppData[lppData.length-2];
+  const capInit = lppData[0].total;
+  const sumE    = data.reduce((s,d)=>s+d.epargne,0);
+  const sumI    = data.reduce((s,d)=>s+d.interets,0);
+  const sumR    = data.reduce((s,d)=>s+d.rachat,0);
+  const sumRet  = data.reduce((s,d)=>s+(d.retrait||0),0);
+  const total   = latest.total;
+
+  document.getElementById('lppMonth').textContent    = fmtDate(latest.date);
+  document.getElementById('lppVal').textContent      = fmt(total);
+  document.getElementById('lppEpargne').textContent  = 'CHF '+fmt(capInit+sumE);
+  document.getElementById('lppInterets').textContent = 'CHF '+fmt(sumI);
+  document.getElementById('lppRachats').textContent  = sumR > 0 ? 'CHF '+fmt(sumR) : '—';
+  document.getElementById('lppRetrait').textContent  = sumRet > 0 ? '-CHF '+fmt(sumRet) : '—';
+
+  // Area
+  let tmpE=capInit,tmpI=0,tmpR=0,tmpRet=0;
+  const cumMap = {};
+  data.forEach(d => {
+    tmpE+=d.epargne; tmpI+=d.interets; tmpR+=d.rachat; tmpRet+=(d.retrait||0);
+    cumMap[d.date]={cumE:tmpE,cumI:tmpI,cumR:tmpR,cumRet:tmpRet};
+  });
+  const areaData = filterPeriod(data,lppPeriod).map(d=>({label:fmtDate(d.date),...cumMap[d.date]}));
+  const aCtx = document.getElementById('lppAreaChart').getContext('2d');
+  const gE=aCtx.createLinearGradient(0,0,0,160); gE.addColorStop(0,'rgba(52,211,153,.5)'); gE.addColorStop(1,'rgba(52,211,153,.02)');
+  const gI=aCtx.createLinearGradient(0,0,0,160); gI.addColorStop(0,'rgba(251,146,60,.55)'); gI.addColorStop(1,'rgba(251,146,60,.02)');
+  const gR=aCtx.createLinearGradient(0,0,0,160); gR.addColorStop(0,'rgba(96,165,250,.55)'); gR.addColorStop(1,'rgba(96,165,250,.02)');
+  if (lppAreaC) lppAreaC.destroy();
+  lppAreaC = new Chart(aCtx, {
+    type:'line',
+    data:{ labels:areaData.map(d=>d.label), datasets:[
+      {label:'Épargne', data:areaData.map(d=>d.cumE), borderColor:C.epargne, backgroundColor:gE, fill:true, tension:0.4, pointRadius:0, borderWidth:1.5},
+      {label:'Intérêts',data:areaData.map(d=>d.cumI), borderColor:C.interets,backgroundColor:gI, fill:true, tension:0.4, pointRadius:0, borderWidth:1.5},
+      {label:'Rachat',  data:areaData.map(d=>d.cumR), borderColor:C.rachat,  backgroundColor:gR, fill:true, tension:0.4, pointRadius:0, borderWidth:1.5},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},
+      plugins:{legend:{labels:{color:C.muted,font:{family:'Roboto',size:9},boxWidth:8,boxHeight:8,padding:8}},tooltip:tooltipOpts(true,true)},
+      scales:{x:{stacked:true,grid:{display:false},ticks:{color:C.muted,font:{family:'Roboto',size:9},maxTicksLimit:8},border:{display:false}},
+              y:{stacked:true,grid:{color:document.body.classList.contains('light')?'#f0f0f6':'#1a1a1f'},ticks:{color:C.muted,font:{family:'Roboto',size:9},callback:v=>`${(v/1000).toFixed(0)}k`,maxTicksLimit:5},border:{display:false}}}}
+  });
+
+  // Bar
+  if (lppBarC) lppBarC.destroy();
+  lppBarC = new Chart(document.getElementById('lppBarChart').getContext('2d'), {
+    type:'bar',
+    data:{labels:fil.map(d=>fmtDate(d.date)),datasets:[
+      {label:'Épargne', data:fil.map(d=>d.epargne), backgroundColor:'rgba(52,211,153,.85)', borderRadius:0},
+      {label:'Intérêts',data:fil.map(d=>d.interets),backgroundColor:'rgba(251,146,60,.85)', borderRadius:3, borderSkipped:'bottom'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:C.muted,font:{family:'Roboto',size:9},boxWidth:8,boxHeight:8,padding:8}},tooltip:tooltipOpts(true,true)},
+      scales:{x:{stacked:true,grid:{display:false},ticks:{color:C.muted,font:{family:'Roboto',size:8},maxTicksLimit:8},border:{display:false}},
+              y:{stacked:true,grid:{color:document.body.classList.contains('light')?'#f0f0f6':'#1a1a1f'},ticks:{color:C.muted,font:{family:'Roboto',size:9},maxTicksLimit:4},border:{display:false}}},
+      barThickness:fil.length>18?8:14}
+  });
+
+  // Split
+  const items=[
+    {label:'Épargne', val:capInit+sumE,pct:((capInit+sumE)/total)*100,color:C.epargne},
+    {label:'Intérêts',val:sumI,        pct:(sumI/total)*100,          color:C.interets},
+    {label:'Rachats', val:sumR,        pct:(sumR/total)*100,          color:C.rachat},
+    {label:'Retrait',  val:sumRet,      pct:(sumRet/total)*100,        color:'#f87171'},
+  ];
+  document.getElementById('lppSplit').innerHTML = items.map(i=>`
+    <div class="split-row">
+      <div class="split-header">
+        <div class="split-left"><div class="split-dot" style="background:${i.color}"></div>${i.label}</div>
+        <div class="split-right" style="color:${i.color}">CHF ${fmt(i.val)}<span class="split-pct">${i.pct.toFixed(1)}%</span></div>
+      </div>
+      <div class="split-bar-bg"><div class="split-bar-fill" style="width:${i.pct}%;background:${i.color}"></div></div>
+    </div>`).join('');
+}
+
+// ════════════════════════════════════════
+//  CASH
+// ════════════════════════════════════════
+function setCashPeriod(p, btn) {
+  cashPeriod = p;
+  document.querySelectorAll('#page-cash .period-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCash();
+}
+
+function buildMonthlyData() {
+  // Agréger salaires par mois
+  const salMap = {};
+  salairesData.forEach(d => {
+    const k = monthKey(d.date);
+    salMap[k] = (salMap[k]||0) + d.montant;
+  });
+
+  // Agréger dépenses par mois (quotidien + commun séparés)
+  const depMap = {}, communMap = {};
+  depensesData.forEach(d => {
+    const k = monthKey(d.date);
+    if (d.categorie === 'commun') communMap[k] = (communMap[k]||0) + d.montant;
+    else depMap[k] = (depMap[k]||0) + d.montant;
+  });
+
+  // Rachats LPP par mois
+  const rachatMap = {};
+  lppData.slice(1).forEach(d => {
+    if (d.rachat > 0) rachatMap[monthKey(d.date)] = d.rachat;
+  });
+
+  // Union de toutes les clés mois triées
+  const allKeys = [...new Set([...Object.keys(salMap), ...Object.keys(depMap)])].sort();
+
+  // Construire cashflow mensuel + solde cumulatif
+  let solde = CASH_SOLDE_INITIAL;
+  return allKeys.map(k => {
+    const sal    = salMap[k]    || 0;
+    const dep    = depMap[k]    || 0;
+    const commun = communMap[k] || 0;
+    const rachat = rachatMap[k] || 0;
+    const saving = sal - dep - commun - rachat;
+    solde += saving;
+    return { date: k+'-01', label: fmtDate(k+'-01'), sal, dep, commun, rachat, saving, solde };
+  });
+}
+
+function renderCash() {
+  const monthly = buildMonthlyData();
+  const fil     = filterPeriod(monthly, cashPeriod);
+
+  if (!fil.length) return;
+
+  const latest    = fil[fil.length-1];
+  const totalSal   = fil.reduce((s,d)=>s+d.sal,0);
+  const totalDep   = fil.reduce((s,d)=>s+d.dep,0);
+  const totalComm  = fil.reduce((s,d)=>s+d.commun,0);
+  const totalRach  = fil.reduce((s,d)=>s+d.rachat,0);
+  const avgSaving = fil.reduce((s,d)=>s+d.saving,0) / fil.length;
+
+  document.getElementById('cashMonth').textContent   = latest.label;
+  document.getElementById('cashVal').textContent     = fmt(latest.solde);
+  document.getElementById('cashSalaires').textContent= 'CHF '+fmt(totalSal);
+  document.getElementById('cashDepenses').textContent = 'CHF '+fmt(totalDep);
+  document.getElementById('cashCommun').textContent   = totalComm > 0 ? 'CHF '+fmt(totalComm) : '—';
+  document.getElementById('cashRachats').textContent  = totalRach > 0 ? 'CHF '+fmt(totalRach) : '—';
+  document.getElementById('cashSaving').textContent  = (avgSaving>=0?'+':'')+fmt(avgSaving)+'/m';
+
+  // Line chart — évolution solde
+  const lCtx = document.getElementById('cashLineChart').getContext('2d');
+  const gCash = lCtx.createLinearGradient(0,0,0,160);
+  gCash.addColorStop(0,'rgba(52,211,153,.35)'); gCash.addColorStop(1,'rgba(52,211,153,.02)');
+  if (cashLineC) cashLineC.destroy();
+  cashLineC = new Chart(lCtx, {
+    type:'line',
+    data:{labels:fil.map(d=>d.label),datasets:[
+      {label:'Solde cash',data:fil.map(d=>d.solde),borderColor:C.epargne,backgroundColor:gCash,fill:true,tension:0.4,pointRadius:0,borderWidth:2}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},
+      plugins:{legend:{display:false},tooltip:tooltipOpts(false)},
+      scales:{x:{grid:{display:false},ticks:{color:C.muted,font:{family:'Roboto',size:9},maxTicksLimit:8},border:{display:false}},
+              y:{grid:{color:document.body.classList.contains('light')?'#f0f0f6':'#1a1a1f'},ticks:{color:C.muted,font:{family:'Roboto',size:9},callback:v=>`${(v/1000).toFixed(0)}k`,maxTicksLimit:5},border:{display:false}}}}
+  });
+
+  // Bar chart — saving mensuel + ligne objectif
+  const savingColors = fil.map(d => d.saving >= SAVING_OBJECTIF ? 'rgba(52,211,153,.85)' : d.saving >= 0 ? 'rgba(251,146,60,.85)' : 'rgba(248,113,113,.85)');
+  if (cashSavingC) cashSavingC.destroy();
+  cashSavingC = new Chart(document.getElementById('cashSavingChart').getContext('2d'), {
+    type:'bar',
+    data:{labels:fil.map(d=>d.label),datasets:[
+      {label:'Saving', data:fil.map(d=>d.saving), backgroundColor:savingColors, borderRadius:3},
+      {label:`Objectif ${SAVING_OBJECTIF}`, data:fil.map(()=>SAVING_OBJECTIF), type:'line', borderColor:'rgba(167,139,250,.7)', borderDash:[4,4], borderWidth:1.5, pointRadius:0, fill:false},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},
+      plugins:{
+        legend:{labels:{color:C.muted,font:{family:'Roboto',size:9},boxWidth:8,boxHeight:8,padding:8}},
+        tooltip:{backgroundColor:document.body.classList.contains('light')?'#ffffff':'#1a1a25',borderColor:document.body.classList.contains('light')?'#e0e0ea':'#3a3a50',borderWidth:1,titleColor:'#34d399',bodyColor:'#e2e2ec',titleFont:{family:'Roboto',size:11},bodyFont:{family:'Roboto',size:11},callbacks:{label:ctx=>`${ctx.dataset.label}: CHF ${fmt(ctx.raw)}`}}
+      },
+      scales:{x:{grid:{display:false},ticks:{color:C.muted,font:{family:'Roboto',size:8},maxTicksLimit:8},border:{display:false}},
+              y:{grid:{color:document.body.classList.contains('light')?'#f0f0f6':'#1a1a1f'},ticks:{color:C.muted,font:{family:'Roboto',size:9},maxTicksLimit:5},border:{display:false}}},
+      barThickness:fil.length>18?8:14}
+  });
+}
+
+
+// ════════════════════════════════════════
+//  TOTAL
+// ════════════════════════════════════════
+let totalPeriod = 'all';
+let totalAreaC  = null;
+
+function setTotalPeriod(p, btn) {
+  totalPeriod = p;
+  document.querySelectorAll('#page-total .period-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTotal();
+}
+
+function renderTotal() {
+  // Build monthly cash data
+  const monthly = buildMonthlyData();
+
+  // Build monthly LPP solde (interpolate from lppData)
+  const lppMap = {};
+  lppData.forEach(d => { lppMap[monthKey(d.date)] = d.total; });
+
+  // Merge on common months
+  const allMonths = monthly.map(m => {
+    const mk = monthKey(m.date);
+    const lppVal = lppMap[mk] || null;
+    return { ...m, lppVal };
+  }).filter(m => m.lppVal !== null);
+
+  const fil = filterPeriod(allMonths, totalPeriod);
+  if (!fil.length) return;
+
+  const latest    = fil[fil.length - 1];
+  const first     = fil[0];
+  const patrimNet = latest.lppVal + latest.solde;
+  const patrimFirst = first.lppVal + first.solde;
+  const progression = patrimNet - patrimFirst;
+
+  // Taux épargne global = total saving / total salaires
+  const totalSal  = fil.reduce((s,d) => s + d.sal, 0);
+  const totalSav  = fil.reduce((s,d) => s + d.saving, 0);
+  const tauxEp    = totalSal > 0 ? (totalSav / totalSal * 100) : 0;
+
+  document.getElementById('totalMonth').textContent = latest.label;
+  document.getElementById('totalVal').textContent   = fmt(patrimNet);
+  document.getElementById('totalLpp').textContent   = 'CHF ' + fmt(latest.lppVal);
+  document.getElementById('totalCash').textContent  = 'CHF ' + fmt(latest.solde);
+  document.getElementById('totalTaux').textContent  = tauxEp.toFixed(1) + '%';
+  document.getElementById('totalProg').textContent  = '+CHF ' + fmt(progression);
+
+  // Stacked bar chart — LPP + Cash cumulatif
+  const tCtx = document.getElementById('totalBarChart').getContext('2d');
+  if (totalAreaC) totalAreaC.destroy();
+  totalAreaC = new Chart(tCtx, {
+    type: 'bar',
+    data: {
+      labels: fil.map(d => d.label),
+      datasets: [
+        { label:'Cash', data:fil.map(d=>d.solde),  backgroundColor:'rgba(52,211,153,.75)',  borderRadius:0 },
+        { label:'LPP',  data:fil.map(d=>d.lppVal), backgroundColor:'rgba(77,159,255,.75)', borderRadius:[3,3,0,0], borderSkipped:'bottom' },
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      interaction:{intersect:false,mode:'index'},
+      plugins:{
+        legend:{labels:{color:C.muted,font:{family:'Roboto',size:9},boxWidth:8,boxHeight:8,padding:8}},
+        tooltip:{
+          backgroundColor:document.body.classList.contains('light')?'#ffffff':'#1a1a25',borderColor:document.body.classList.contains('light')?'#e0e0ea':'#3a3a50',borderWidth:1,
+          titleColor:'#fb923c',bodyColor:'#e2e2ec',
+          titleFont:{family:'Roboto',size:11},bodyFont:{family:'Roboto',size:11},
+          callbacks:{
+            label: ctx => `${ctx.dataset.label}: CHF ${fmt(ctx.raw)}`,
+            footer: items => `Total: CHF ${fmt(items.reduce((s,i)=>s+i.raw,0))}`
+          }
+        }
+      },
+      scales:{
+        x:{stacked:true,grid:{display:false},ticks:{color:C.muted,font:{family:'Roboto',size:9},maxTicksLimit:8},border:{display:false}},
+        y:{stacked:true,grid:{color:document.body.classList.contains('light')?'#f0f0f6':'#1a1a1f'},ticks:{color:C.muted,font:{family:'Roboto',size:9},callback:v=>`${(v/1000).toFixed(0)}k`,maxTicksLimit:5},border:{display:false}}
+      },
+      barThickness: fil.length > 18 ? 8 : 14,
+    }
+  });
+
+  // Répartition LPP / Cash
+  const items = [
+    { label:'LPP',  val:latest.lppVal, pct:(latest.lppVal/patrimNet)*100, color:'#4d9fff' },
+    { label:'Cash', val:latest.solde,  pct:(latest.solde/patrimNet)*100,  color:'#34d399' },
+  ];
+  document.getElementById('totalSplit').innerHTML = items.map(i=>`
+    <div class="split-row">
+      <div class="split-header">
+        <div class="split-left"><div class="split-dot" style="background:${i.color}"></div>${i.label}</div>
+        <div class="split-right" style="color:${i.color}">CHF ${fmt(i.val)}<span class="split-pct">${i.pct.toFixed(1)}%</span></div>
+      </div>
+      <div class="split-bar-bg"><div class="split-bar-fill" style="width:${i.pct}%;background:${i.color}"></div></div>
+    </div>`).join('');
+
+  // Top 3 meilleurs mois de saving
+  const sorted = [...fil].filter(d=>d.saving>0).sort((a,b)=>b.saving-a.saving).slice(0,5);
+  document.getElementById('totalBestMonths').innerHTML = sorted.length ? sorted.map((d,i) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);${i===sorted.length-1?'border:none':''}">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:20px;height:20px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:10px;color:#5a5a72">${i+1}</div>
+        <div style="font-size:12px">${d.label}</div>
+      </div>
+      <div style="font-size:13px;font-weight:500;color:#34d399">+CHF ${fmt(d.saving)}</div>
+    </div>`).join('') : '<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px">Pas encore de données</div>';
+}
+
+// ════════════════════════════════════════
+//  THEME
+// ════════════════════════════════════════
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  document.getElementById('themeIcon').textContent = isLight ? '🌙' : '☀️';
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  // Re-render active page to update chart colors
+  const activePage = document.querySelector('.page.active').id.replace('page-','');
+  if (activePage === 'lpp') renderLpp();
+  else if (activePage === 'cash') renderCash();
+  else if (activePage === 'total') renderTotal();
+}
+
+// ════════════════════════════════════════
+//  FETCH GOOGLE SHEETS
+// ════════════════════════════════════════
+const API_KEY = 'AIzaSyBs505KcK4_vsviOp8g4lf3u561nQf95_8';
+
+async function fetchCSV(sheet) {
+  // Use official Google Sheets API v4 — no CORS issues
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(sheet)}?key=${API_KEY}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('API HTTP ' + res.status);
+  const json = await res.json();
+  if (!json.values || json.values.length < 2) throw new Error('Aucune donnée');
+  
+  // Skip header row, return data rows
+  const rows = json.values.slice(1);
+  return rows.map(cols => {
+    return cols.map(c => {
+      // Convert DD/MM/YYYY to YYYY-MM-DD
+      if (c && c.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+        const [d,m,y] = c.split('/');
+        return `${y}-${m}-${d}`;
+      }
+      // Remove Swiss thousand separators and normalize decimals
+      return c.replace(/[\u00a0\u202f']/g, '').replace(',', '.');
+    });
+  });
+}
+
+async function init() {
+  const status = document.getElementById('globalStatus');
+  let loaded = 0;
+
+  // LPP
+  try {
+    const rows = await fetchCSV('lpp');
+    console.log('RAW rows[0]:', rows[0]);
+    console.log('RAW rows[1]:', rows[1]);
+    const parsed = rows.map(c=>({date:c[0],epargne:parseFloat(c[1])||0,interets:parseFloat(c[2])||0,rachat:parseFloat(c[3])||0,retrait:parseFloat(c[4])||0,total:parseFloat(c[5])||0})).filter(d=>d.date&&d.total>0);
+    console.log('PARSED count:', parsed.length, 'first:', parsed[0]);
+    if (parsed.length) { lppData = parsed; loaded++; }
+    else { status.textContent = 'Sheet lu mais 0 lignes valides'; status.style.color='#f87171'; }
+  } catch(e) { status.textContent = 'Erreur LPP: '+e.message; status.style.color='#f87171'; console.error('LPP error:', e); }
+
+  // Salaires
+  try {
+    const rows = await fetchCSV('salaires');
+    const parsed = rows.map(c=>({date:c[0],montant:parseFloat(c[1])||0})).filter(d=>d.date&&d.montant>0);
+    if (parsed.length) { salairesData = parsed; loaded++; }
+  } catch(e) {}
+
+  // Dépenses
+  try {
+    const rows = await fetchCSV('depenses');
+    const parsed = rows.map(c=>({date:c[0],montant:parseFloat(c[1])||0,categorie:(c[2]||'quotidien').toLowerCase().trim()})).filter(d=>d.date&&d.montant>0);
+    if (parsed.length) { depensesData = parsed; loaded++; }
+  } catch(e) {}
+
+  if (loaded > 0) {
+    status.style.color = '#34d399';
+    status.textContent = `● Google Sheets · ${new Date().toLocaleDateString('fr-CH')}`;
+  } else if (!status.textContent.startsWith('Erreur')) {
+    status.style.color = '#5a5a72';
+    status.textContent = 'Données de démonstration';
+  }
+
+  renderLpp();
+}
+
+// Restore saved theme
+if (localStorage.getItem('theme') === 'light') {
+  document.body.classList.add('light');
+  document.getElementById('themeIcon').textContent = '🌙';
+}
+init();
+</script>
+</body>
+</html>
