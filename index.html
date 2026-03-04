@@ -660,43 +660,39 @@ function toggleTheme() {
 // ════════════════════════════════════════
 //  FETCH GOOGLE SHEETS
 // ════════════════════════════════════════
-async function fetchCSV(sheet) {
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${sheet}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('HTTP '+res.status);
-  const text = await res.text();
-  const lines = text.trim().split('\n').slice(1);
-  return lines.map(line => {
-    // Parse CSV respecting quoted fields (fields may contain commas)
-    const cols = [];
-    let cur = '', inQ = false;
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch === '"') { inQ = !inQ; }
-      else if (ch === ',' && !inQ) { cols.push(cur); cur = ''; }
-      else { cur += ch; }
-    }
-    cols.push(cur);
-
-    // Clean each value: remove spaces, non-breaking spaces, apostrophes, convert , to .
-    const clean = cols.map(c => c
-      .replace(/[\u00a0\u202f\u2009']/g, '') // remove non-breaking/narrow spaces
-      .replace(/â€¯/g, '')                        // remove corrupted narrow space
-      .replace(/,/g, '.')                          // Swiss decimal comma to dot
-      .trim()
-    );
-
-    // Convert DD/MM/YYYY to YYYY-MM-DD
-    if (clean[0] && clean[0].match(/^\d{2}\.\d{2}\.\d{4}$/)) {
-      const [d,m,y] = clean[0].split('.');
-      clean[0] = `${y}-${m}-${d}`;
-    } else if (clean[0] && clean[0].match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-      const [d,m,y] = clean[0].split('/');
-      clean[0] = `${y}-${m}-${d}`;
-    }
-
-    return clean;
+function fetchGViz(sheet) {
+  return new Promise((resolve, reject) => {
+    const cb = 'cb_' + Math.random().toString(36).slice(2);
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&tq=select+*&sheet=${encodeURIComponent(sheet)}&callback=${cb}`;
+    const script = document.createElement('script');
+    script.src = url;
+    window[cb] = (data) => {
+      delete window[cb];
+      document.head.removeChild(script);
+      try {
+        const rows = data.table.rows;
+        const result = rows.map(row => {
+          return row.c.map(cell => {
+            if (!cell || cell.v === null) return '';
+            // Handle Google Date format: Date(2024,0,1)
+            if (typeof cell.v === 'string' && cell.v.startsWith('Date(')) {
+              const parts = cell.v.replace('Date(','').replace(')','').split(',');
+              const y = parts[0], m = String(+parts[1]+1).padStart(2,'0'), d = String(+parts[2]).padStart(2,'0');
+              return `${y}-${m}-${d}`;
+            }
+            return String(cell.v);
+          });
+        });
+        resolve(result);
+      } catch(e) { reject(e); }
+    };
+    script.onerror = () => { delete window[cb]; document.head.removeChild(script); reject(new Error('Script error')); };
+    document.head.appendChild(script);
   });
+}
+
+async function fetchCSV(sheet) {
+  return fetchGViz(sheet);
 }
 
 async function init() {
