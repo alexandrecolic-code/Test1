@@ -661,31 +661,36 @@ function toggleTheme() {
 //  FETCH GOOGLE SHEETS
 // ════════════════════════════════════════
 async function fetchCSV(sheet) {
-  // Use allorigins proxy to bypass CORS
   const sheetUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheet)}`;
-  const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(sheetUrl)}`;
   
-  const res = await fetch(proxyUrl);
-  if (!res.ok) throw new Error('Proxy HTTP ' + res.status);
-  const json = await res.json();
-  
-  // Extract the JSON from the Google response (strips leading callback)
-  const raw = json.contents;
-  const jsonStr = raw.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/);
-  if (!jsonStr) throw new Error('Format inattendu');
-  const data = JSON.parse(jsonStr[1]);
-  
-  return data.table.rows.map(row => {
-    return row.c.map(cell => {
-      if (!cell || cell.v === null || cell.v === undefined) return '';
-      if (typeof cell.v === 'string' && cell.v.startsWith('Date(')) {
-        const parts = cell.v.replace('Date(','').replace(')','').split(',');
-        const y = parts[0], m = String(+parts[1]+1).padStart(2,'0'), d = String(+parts[2]).padStart(2,'0');
-        return `${y}-${m}-${d}`;
-      }
-      return String(cell.v);
-    });
-  });
+  // Try multiple proxies in order
+  const proxies = [
+    url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+  ];
+
+  let lastErr = null;
+  for (const makeProxy of proxies) {
+    try {
+      const res = await fetch(makeProxy(sheetUrl));
+      if (!res.ok) continue;
+      const text = await res.text();
+      const match = text.match(/setResponse\(([\s\S]*)\)/);
+      if (!match) continue;
+      const data = JSON.parse(match[1]);
+      return data.table.rows.map(row =>
+        row.c.map(cell => {
+          if (!cell || cell.v === null || cell.v === undefined) return '';
+          if (typeof cell.v === 'string' && cell.v.startsWith('Date(')) {
+            const [y,m,d] = cell.v.replace('Date(','').replace(')','').split(',');
+            return `${y}-${String(+m+1).padStart(2,'0')}-${String(+d).padStart(2,'0')}`;
+          }
+          return String(cell.v);
+        })
+      );
+    } catch(e) { lastErr = e; }
+  }
+  throw lastErr || new Error('Tous les proxies ont échoué');
 }
 
 async function init() {
