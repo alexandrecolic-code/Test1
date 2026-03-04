@@ -706,9 +706,13 @@ async function init() {
   // LPP
   try {
     const rows = await fetchCSV('lpp');
+    console.log('RAW rows[0]:', rows[0]);
+    console.log('RAW rows[1]:', rows[1]);
     const parsed = rows.map(c=>({date:c[0],epargne:parseFloat(c[1])||0,interets:parseFloat(c[2])||0,rachat:parseFloat(c[3])||0,total:parseFloat(c[5])||0})).filter(d=>d.date&&d.total>0);
+    console.log('PARSED count:', parsed.length, 'first:', parsed[0]);
     if (parsed.length) { lppData = parsed; loaded++; }
-  } catch(e) {}
+    else { status.textContent = 'Sheet lu mais 0 lignes valides'; status.style.color='#f87171'; }
+  } catch(e) { status.textContent = 'Erreur: '+e.message; status.style.color='#f87171'; }
 
   // Salaires
   try {
