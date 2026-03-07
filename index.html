@@ -266,9 +266,23 @@ body { font-family:'Roboto',sans-serif; background:var(--bg); color:var(--text);
         <div class="meta-item"><div class="meta-label">Rendement</div><div class="meta-value" style="color:#fb923c" id="p3aRend">—</div></div>
         <div class="meta-item"><div class="meta-label">Dividendes</div><div class="meta-value" style="color:#60a5fa" id="p3aDivid">—</div></div>
         <div class="meta-item"><div class="meta-label">Retrait</div><div class="meta-value" style="color:#f87171" id="p3aRetrait">—</div></div>
+        <div class="meta-item"><div class="meta-label">Plafond annuel</div><div class="meta-value" style="color:#a78bfa" id="p3aPlafond">—</div></div>
       </div>
     </div>
 
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="card-title" style="margin-bottom:0" id="p3aPlafondTitle">Plafond annuel</div>
+        <div style="font-size:11px;color:var(--muted)" id="p3aPlafondReste">—</div>
+      </div>
+      <div class="split-bar-bg" style="height:8px;border-radius:4px">
+        <div id="p3aPlafondBar" style="height:8px;border-radius:4px;background:#a78bfa;width:0%;transition:width .6s ease"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px">
+        <div style="font-size:10px;color:var(--muted)" id="p3aPlafondVerse">—</div>
+        <div style="font-size:10px;color:var(--muted)" id="p3aPlafondMax">—</div>
+      </div>
+    </div>
     <div class="periods" id="p3aPeriods">
       <button class="period-btn" onclick="setP3aPeriod('ytd',this)">YTD</button>
       <button class="period-btn" onclick="setP3aPeriod('1y',this)">1 an</button>
@@ -878,24 +892,42 @@ function renderP3a() {
   document.getElementById('p3aRend').textContent    = (sumRend>=0?'+':'') + 'CHF ' + fmt(sumRend);
   document.getElementById('p3aDivid').textContent   = sumDivid > 0 ? 'CHF ' + fmt(sumDivid) : '—';
   document.getElementById('p3aRetrait').textContent = sumRetrait > 0 ? '-CHF ' + fmt(sumRetrait) : '—';
+
+  // Plafond annuel — versements de l'année en cours vs plafond légal
+  const plafonds = { 2024: 7056, 2025: 7056, 2026: 7258 };
+  const yearNow3a  = new Date().getFullYear();
+  const plafond    = plafonds[yearNow3a] || 7258;
+  const verseAnCours = data3A
+    .filter(d => d.date && d.date.startsWith(String(yearNow3a)))
+    .reduce((s,d) => s + d.versement, 0);
+  const resteAVerser = Math.max(0, plafond - verseAnCours);
+  const pctPlafond   = Math.min(100, (verseAnCours / plafond * 100)).toFixed(0);
+  document.getElementById('p3aPlafond').textContent = `CHF ${fmt(verseAnCours)} / ${fmt(plafond)}`;
+  document.getElementById('p3aPlafond').title      = `Reste à verser : CHF ${fmt(resteAVerser)} (${pctPlafond}% atteint)`;
+  document.getElementById('p3aPlafondTitle').textContent = `Plafond ${yearNow3a}`;
+  document.getElementById('p3aPlafondBar').style.width   = pctPlafond + '%';
+  document.getElementById('p3aPlafondBar').style.background = verseAnCours >= plafond ? '#34d399' : '#a78bfa';
+  document.getElementById('p3aPlafondVerse').textContent = `Versé : CHF ${fmt(verseAnCours)}`;
+  document.getElementById('p3aPlafondMax').textContent   = `Plafond : CHF ${fmt(plafond)}`;
+  document.getElementById('p3aPlafondReste').textContent = resteAVerser > 0 ? `Reste CHF ${fmt(resteAVerser)}` : '✓ Plafond atteint';
+  document.getElementById('p3aPlafondReste').style.color = resteAVerser > 0 ? 'var(--muted)' : '#34d399';
   document.getElementById('p3aRend').style.color    = sumRend >= 0 ? '#fb923c' : '#f87171';
 
-  // ── Area chart — cumul direct depuis d.total ──
-  // Après un retrait, on repart du nouveau total en gardant les proportions courantes
+  // ── Area chart — cumul avec reset après retrait ──
+  // Après un retrait, on repart de zéro en posant cumV = d.total, cumR = 0, cumD = 0
+  // car le retrait solde tout le passé et on repart d'un capital = versements nets
   let cumV=0, cumR=0, cumD=0;
   const areaData = fil.map((d, i) => {
-    cumV += d.versement;
-    cumR += d.rendement;
-    cumD += d.dividendes;
-    // Si retrait : on recalcule les cumuls pour que leur somme = d.total
-    if ((d.retrait||0) > 0) {
-      const cumSum = cumV + cumR + cumD;
-      if (cumSum > 0) {
-        const ratio = d.total / cumSum;
-        cumV = Math.round(cumV * ratio * 100) / 100;
-        cumR = Math.round(cumR * ratio * 100) / 100;
-        cumD = Math.round(cumD * ratio * 100) / 100;
-      }
+    const retrait = d.retrait || 0;
+    if (retrait > 0) {
+      // Reset : on repart du nouveau total, tout en versements
+      cumV = d.total;
+      cumR = 0;
+      cumD = 0;
+    } else {
+      cumV += d.versement;
+      cumR += d.rendement;
+      cumD += d.dividendes;
     }
     return { label: fmtDate(d.date), cumV: Math.max(0,cumV), cumR: Math.max(0,cumR), cumD: Math.max(0,cumD) };
   });
