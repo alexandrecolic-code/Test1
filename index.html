@@ -322,8 +322,6 @@ body { font-family:'Roboto',sans-serif; background:var(--bg); color:var(--text);
         <div class="meta-item"><div class="meta-label">LPP</div><div class="meta-value" style="color:#4d9fff" id="totalLpp">—</div></div>
         <div class="meta-item"><div class="meta-label">3ème pilier</div><div class="meta-value" style="color:#fb923c" id="total3A">—</div></div>
         <div class="meta-item"><div class="meta-label">Cash</div><div class="meta-value" style="color:#34d399" id="totalCash">—</div></div>
-        <div class="meta-item"><div class="meta-label">Taux épargne</div><div class="meta-value" style="color:#fb923c" id="totalTaux">—</div></div>
-        <div class="meta-item"><div class="meta-label">Progression</div><div class="meta-value" style="color:#60a5fa" id="totalProg">—</div></div>
       </div>
     </div>
 
@@ -332,6 +330,24 @@ body { font-family:'Roboto',sans-serif; background:var(--bg); color:var(--text);
       <button class="period-btn" onclick="setTotalPeriod('1y',this)">1 an</button>
       <button class="period-btn" onclick="setTotalPeriod('5y',this)">5 ans</button>
       <button class="period-btn active" onclick="setTotalPeriod('all',this)">Tout</button>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <!-- Card progression patrimoine net -->
+      <div class="card" style="margin-bottom:0">
+        <div class="card-title" style="margin-bottom:10px">Progression patrimoine</div>
+        <div style="font-size:22px;font-weight:300;color:var(--text)" id="totalProg">—</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px" id="totalProgPct">—</div>
+      </div>
+      <!-- Card épargne cash -->
+      <div class="card" style="margin-bottom:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div class="card-title" style="margin-bottom:0">Épargne cash</div>
+          <div style="font-size:13px;font-weight:500;color:#34d399" id="totalTaux">—</div>
+        </div>
+        <div style="font-size:22px;font-weight:300;color:var(--text)" id="totalEpargne">—</div>
+        
+      </div>
     </div>
 
     <div class="card">
@@ -1219,13 +1235,24 @@ function renderTotal() {
   const totalSav  = fil.reduce((s,d) => s + d.saving, 0);
   const tauxEp    = totalSal > 0 ? (totalSav / totalSal * 100) : 0;
 
-  document.getElementById('totalMonth').textContent = latest.label;
-  document.getElementById('totalVal').textContent   = fmt(patrimNet);
-  document.getElementById('totalLpp').textContent   = 'CHF ' + fmt(latest.lppVal);
-  document.getElementById('total3A').textContent    = 'CHF ' + fmt(latest.p3aVal);
-  document.getElementById('totalCash').textContent  = 'CHF ' + fmt(latest.solde);
-  document.getElementById('totalTaux').textContent  = tauxEp.toFixed(1) + '%';
-  document.getElementById('totalProg').textContent  = '+CHF ' + fmt(progression);
+  // Épargne cash = sal - dep - commun (sans rachats LPP ni vers 3A)
+  const totalEpargne = fil.reduce((s,d) => s + d.sal - d.dep - d.commun, 0);
+  const tauxEpCash   = fil.reduce((s,d) => s + d.sal, 0);
+  const tauxCash     = tauxEpCash > 0 ? (totalEpargne / tauxEpCash * 100) : 0;
+  const progSign     = progression >= 0 ? '+' : '';
+
+  document.getElementById('totalMonth').textContent   = latest.label;
+  document.getElementById('totalVal').textContent     = fmt(patrimNet);
+  document.getElementById('totalLpp').textContent     = 'CHF ' + fmt(latest.lppVal);
+  document.getElementById('total3A').textContent      = 'CHF ' + fmt(latest.p3aVal);
+  document.getElementById('totalCash').textContent    = 'CHF ' + fmt(latest.solde);
+  document.getElementById('totalProg').textContent    = progSign + 'CHF ' + fmt(progression);
+  document.getElementById('totalProg').style.color    = progression >= 0 ? '#34d399' : '#f87171';
+  document.getElementById('totalProgPct').textContent = patrimFirst > 0 ? progSign + (progression/patrimFirst*100).toFixed(1) + '%' : '';
+  document.getElementById('totalEpargne').textContent = (totalEpargne>=0?'+':'') + 'CHF ' + fmt(totalEpargne);
+  document.getElementById('totalEpargne').style.color = totalEpargne >= 0 ? 'var(--text)' : '#f87171';
+  document.getElementById('totalTaux').textContent    = tauxCash.toFixed(1) + '%';
+  document.getElementById('totalTaux').style.color    = tauxCash >= 20 ? '#34d399' : tauxCash >= 10 ? '#fb923c' : '#f87171';
 
   // Stacked bar chart — LPP + Cash cumulatif
   const tCtx = document.getElementById('totalBarChart').getContext('2d');
