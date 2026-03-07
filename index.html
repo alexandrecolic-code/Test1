@@ -866,6 +866,7 @@ function renderP3a() {
   if (!fil.length) return;
 
   const latest     = fil[fil.length-1];
+  console.log('3A fil last 3:', fil.slice(-3).map(d=>({date:d.date,v:d.versement,r:d.rendement,ret:d.retrait,total:d.total})));
   const sumVerse   = fil.reduce((s,d)=>s+d.versement,0);
   const sumRend    = fil.reduce((s,d)=>s+d.rendement,0);
   const sumDivid   = fil.reduce((s,d)=>s+d.dividendes,0);
@@ -879,21 +880,24 @@ function renderP3a() {
   document.getElementById('p3aRetrait').textContent = sumRetrait > 0 ? '-CHF ' + fmt(sumRetrait) : '—';
   document.getElementById('p3aRend').style.color    = sumRend >= 0 ? '#fb923c' : '#f87171';
 
-  // ── Area chart — on utilise d.total comme référence absolue ──
-  // et on répartit proportionnellement versements/rendement/dividendes
-  let runV=0, runR=0, runD=0;
-  const areaData = fil.map(d => {
-    runV += d.versement;
-    runR += d.rendement;
-    runD += d.dividendes;
-    const runSum = runV + runR + runD;
-    const realTotal = d.total;
-    // Ajuster proportionnellement pour que cumV+cumR+cumD = d.total
-    const ratio = runSum > 0 ? realTotal / runSum : 1;
-    const cumV  = Math.round(runV * ratio * 100) / 100;
-    const cumR  = Math.round(runR * ratio * 100) / 100;
-    const cumD  = Math.round(runD * ratio * 100) / 100;
-    return { label: fmtDate(d.date), cumV, cumR, cumD };
+  // ── Area chart — cumul direct depuis d.total ──
+  // Après un retrait, on repart du nouveau total en gardant les proportions courantes
+  let cumV=0, cumR=0, cumD=0;
+  const areaData = fil.map((d, i) => {
+    cumV += d.versement;
+    cumR += d.rendement;
+    cumD += d.dividendes;
+    // Si retrait : on recalcule les cumuls pour que leur somme = d.total
+    if ((d.retrait||0) > 0) {
+      const cumSum = cumV + cumR + cumD;
+      if (cumSum > 0) {
+        const ratio = d.total / cumSum;
+        cumV = Math.round(cumV * ratio * 100) / 100;
+        cumR = Math.round(cumR * ratio * 100) / 100;
+        cumD = Math.round(cumD * ratio * 100) / 100;
+      }
+    }
+    return { label: fmtDate(d.date), cumV: Math.max(0,cumV), cumR: Math.max(0,cumR), cumD: Math.max(0,cumD) };
   });
 
   const aCtx = document.getElementById('p3aAreaChart').getContext('2d');
