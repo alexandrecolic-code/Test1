@@ -879,23 +879,20 @@ function renderP3a() {
   document.getElementById('p3aRetrait').textContent = sumRetrait > 0 ? '-CHF ' + fmt(sumRetrait) : '—';
   document.getElementById('p3aRend').style.color    = sumRend >= 0 ? '#fb923c' : '#f87171';
 
-  // ── Area chart — évolution capital ──
-  // On cumule versements, rendement, dividendes puis on déduit le retrait de l'ensemble
-  // en utilisant le total réel comme référence
-  let cumV=0, cumR=0, cumD=0;
+  // ── Area chart — on utilise d.total comme référence absolue ──
+  // et on répartit proportionnellement versements/rendement/dividendes
+  let runV=0, runR=0, runD=0;
   const areaData = fil.map(d => {
-    cumV += d.versement;
-    cumR += d.rendement;
-    cumD += d.dividendes;
-    const cumTotal = cumV + cumR + cumD;
-    const retrait  = d.retrait || 0;
-    if (retrait > 0 && cumTotal > 0) {
-      // Déduire le retrait proportionnellement sur chaque composante
-      const ratio = (cumTotal - retrait) / cumTotal;
-      cumV = Math.round(cumV * ratio * 100) / 100;
-      cumR = Math.round(cumR * ratio * 100) / 100;
-      cumD = Math.round(cumD * ratio * 100) / 100;
-    }
+    runV += d.versement;
+    runR += d.rendement;
+    runD += d.dividendes;
+    const runSum = runV + runR + runD;
+    const realTotal = d.total;
+    // Ajuster proportionnellement pour que cumV+cumR+cumD = d.total
+    const ratio = runSum > 0 ? realTotal / runSum : 1;
+    const cumV  = Math.round(runV * ratio * 100) / 100;
+    const cumR  = Math.round(runR * ratio * 100) / 100;
+    const cumD  = Math.round(runD * ratio * 100) / 100;
     return { label: fmtDate(d.date), cumV, cumR, cumD };
   });
 
