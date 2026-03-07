@@ -665,15 +665,15 @@ function renderLpp() {
     {label:'Épargne',  val:capInit+sumE-sumRet, pct:((capInit+sumE-sumRet)/total)*100, color:C.epargne},
     {label:'Intérêts', val:sumI,                pct:(sumI/total)*100,                  color:C.interets},
     {label:'Rachats',  val:sumR,                pct:(sumR/total)*100,                  color:C.rachat},
-    {label:'Retrait',  val:sumRet,              pct:(sumRet/total)*100,                color:'#f87171'},
-  ];
+    ...(sumRet>0?[{label:'Retrait', val:sumRet, pct:0, color:'#f87171', noBar:true}]:[]),
+  ].filter(i=>i.val>0||i.noBar);
   document.getElementById('lppSplit').innerHTML = items.map(i=>`
     <div class="split-row">
       <div class="split-header">
         <div class="split-left"><div class="split-dot" style="background:${i.color}"></div>${i.label}</div>
-        <div class="split-right" style="color:${i.color}">CHF ${fmt(i.val)}<span class="split-pct">${i.pct.toFixed(1)}%</span></div>
+        <div class="split-right" style="color:${i.color}">CHF ${fmt(i.val)}<span class="split-pct">${i.noBar?'':i.pct.toFixed(1)+'%'}</span></div>
       </div>
-      <div class="split-bar-bg"><div class="split-bar-fill" style="width:${i.pct}%;background:${i.color}"></div></div>
+      ${i.noBar?'':'<div class="split-bar-bg"><div class="split-bar-fill" style="width:'+i.pct+'%;background:'+i.color+'"></div></div>'}
     </div>`).join('');
 }
 
@@ -836,6 +836,7 @@ function renderCash() {
 
   // ── Progression annuelle ──
   renderAnnual();
+  syncYtdBtnState();
 }
 
 
@@ -1026,6 +1027,17 @@ function setAnnualMode(mode) {
   ytdBtn.style.borderColor = 'var(--border)';
   annualYtd = false;
   renderAnnual();
+}
+
+// ensure YTD btn visible on initial load — called from renderCash
+function syncYtdBtn() {
+  const ytdBtn = document.getElementById('annualBtnYtd');
+  if (annualMode === 'comparaison') ytdBtn.style.display = 'flex';
+}
+
+function syncYtdBtnState() {
+  const ytdBtn = document.getElementById('annualBtnYtd');
+  ytdBtn.style.display = annualMode === 'comparaison' ? 'flex' : 'none';
 }
 
 function toggleAnnualYtd() {
