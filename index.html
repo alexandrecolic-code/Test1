@@ -6,6 +6,7 @@
 <title>Finances VF</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 html, body { height:100%; }
@@ -107,6 +108,66 @@ body { font-family:'Roboto',sans-serif; background:var(--bg); color:var(--text);
 .tx-label { font-size:12px; }
 .tx-amount { font-size:13px; font-weight:500; }
 
+/* ── Login Page ── */
+#loginPage {
+  display:none; position:fixed; inset:0; z-index:2000;
+  background:var(--bg);
+  flex-direction:column; align-items:center; justify-content:center;
+  padding:32px 24px;
+}
+#loginPage.visible { display:flex; }
+.login-logo {
+  width:72px; height:72px; border-radius:24px;
+  background:linear-gradient(135deg,#1a1a2e 0%,#252540 100%);
+  border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  margin-bottom:28px;
+  box-shadow: 0 8px 32px rgba(77,159,255,.15);
+}
+.login-title { font-size:26px; font-weight:300; letter-spacing:-.5px; margin-bottom:8px; text-align:center; }
+.login-subtitle { font-size:13px; color:var(--muted); text-align:center; margin-bottom:48px; line-height:1.5; }
+.login-features { width:100%; max-width:320px; margin-bottom:40px; display:flex; flex-direction:column; gap:12px; }
+.login-feature { display:flex; align-items:center; gap:12px; padding:12px 16px; background:var(--bg3); border-radius:14px; border:1px solid var(--border); }
+.login-feature-icon { width:32px; height:32px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.login-feature-text { font-size:12px; color:var(--muted); line-height:1.4; }
+.login-feature-title { font-size:13px; font-weight:500; color:var(--text); margin-bottom:2px; }
+.login-google-btn {
+  width:100%; max-width:320px;
+  padding:16px 24px;
+  background:#4d9fff;
+  border:none; border-radius:16px;
+  color:white; font-family:Roboto,sans-serif; font-size:15px; font-weight:500;
+  cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px;
+  transition:all .2s; box-shadow:0 4px 20px rgba(77,159,255,.3);
+}
+.login-google-btn:hover { background:#3d8ff0; transform:translateY(-1px); }
+.login-google-btn:active { transform:translateY(0); opacity:.9; }
+.login-demo-btn {
+  margin-top:14px; background:none; border:none;
+  color:var(--muted); font-family:Roboto,sans-serif; font-size:12px;
+  cursor:pointer; padding:8px; text-decoration:underline;
+}
+.login-footer { margin-top:32px; font-size:10px; color:var(--muted2); text-align:center; line-height:1.6; }
+
+/* ── Modal ── */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:1000; align-items:flex-end; justify-content:center; }
+.modal-overlay.open { display:flex; }
+.modal { background:var(--bg2); border-radius:24px 24px 0 0; padding:24px; width:100%; max-width:500px; max-height:85vh; overflow-y:auto; }
+.modal-title { font-size:15px; font-weight:500; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; }
+.modal-close { background:var(--bg3); border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; color:var(--muted); font-size:16px; display:flex; align-items:center; justify-content:center; }
+.form-group { margin-bottom:14px; }
+.form-label { font-size:11px; color:var(--muted); margin-bottom:5px; display:block; }
+.form-input { width:100%; padding:11px 14px; background:var(--bg3); border:1px solid var(--border); border-radius:12px; color:var(--text); font-family:Roboto,sans-serif; font-size:14px; box-sizing:border-box; outline:none; }
+.form-input:focus { border-color:#4d9fff; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.btn-primary { width:100%; padding:14px; background:#4d9fff; border:none; border-radius:14px; color:white; font-family:Roboto,sans-serif; font-size:14px; font-weight:500; cursor:pointer; margin-top:8px; }
+.btn-primary:active { opacity:.85; }
+.btn-danger { background:#f87171; color:white; border:none; border-radius:8px; padding:4px 10px; font-size:11px; cursor:pointer; font-family:Roboto,sans-serif; }
+.add-btn { display:flex; align-items:center; gap:6px; padding:8px 14px; background:var(--bg3); border:1px solid var(--border); border-radius:12px; color:var(--muted); font-family:Roboto,sans-serif; font-size:12px; cursor:pointer; transition:all .2s; }
+.add-btn:hover { border-color:#4d9fff; color:#4d9fff; }
+.data-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); font-size:12px; }
+.data-row:last-child { border-bottom:none; }
+
 /* ── Desktop layout ── */
 @media (min-width: 768px) {
   body { flex-direction:row; }
@@ -166,6 +227,64 @@ body { font-family:'Roboto',sans-serif; background:var(--bg); color:var(--text);
 </head>
 <body>
 
+<!-- Login Page -->
+<div id="loginPage" class="visible">
+  <div class="login-logo">
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#4d9fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+      <polyline points="16 7 22 7 22 13"/>
+    </svg>
+  </div>
+  <div class="login-title">Finances VF</div>
+  <div class="login-subtitle">Ton tableau de bord financier<br>personnel et sécurisé</div>
+
+  <div class="login-features">
+    <div class="login-feature">
+      <div class="login-feature-icon" style="background:rgba(77,159,255,.1)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4d9fff" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div>
+        <div class="login-feature-title">Données privées</div>
+        <div class="login-feature-text">Stockées dans ton Google Drive personnel, accessible uniquement par toi</div>
+      </div>
+    </div>
+    <div class="login-feature">
+      <div class="login-feature-icon" style="background:rgba(52,211,153,.1)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      </div>
+      <div>
+        <div class="login-feature-title">Sync automatique</div>
+        <div class="login-feature-text">LPP, Cash, 3A, Investissements — tout synchronisé en temps réel</div>
+      </div>
+    </div>
+    <div class="login-feature">
+      <div class="login-feature-icon" style="background:rgba(251,146,60,.1)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fb923c" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+      </div>
+      <div>
+        <div class="login-feature-title">Mobile & Desktop</div>
+        <div class="login-feature-text">Accès depuis n'importe quel appareil, partout</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="login-google-btn" onclick="loginWithGoogle()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+    </svg>
+    Continuer avec Google
+  </button>
+  <button class="login-demo-btn" onclick="enterDemoMode()">Voir la démo sans connexion</button>
+
+  <div class="login-footer">
+    Tes données ne sont jamais envoyées à un serveur tiers.<br>
+    Connexion sécurisée via OAuth 2.0 Google.
+  </div>
+</div>
+
 <!-- Header -->
 <div class="header" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;">
   <div style="flex:1"></div>
@@ -173,7 +292,11 @@ body { font-family:'Roboto',sans-serif; background:var(--bg); color:var(--text);
     <div class="header-title">Finances VF</div>
     <div class="header-status" id="globalStatus">⏳ Chargement…</div>
   </div>
-  <div style="flex:1;display:flex;justify-content:flex-end">
+  <div style="flex:1;display:flex;justify-content:flex-end;gap:8px;align-items:center">
+    <button onclick="driveSignIn()" id="driveBtn" title="Google Drive" style="background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:6px 10px;cursor:pointer;display:flex;align-items:center;gap:5px;font-family:Roboto,sans-serif;font-size:10px;color:var(--muted);transition:all .2s;">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      <span id="driveBtnLabel">Drive</span>
+    </button>
     <button onclick="toggleTheme()" id="themeBtn" style="background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:6px 12px;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:Roboto,sans-serif;font-size:11px;color:var(--muted);transition:all .2s;">
       <span id="themeIcon">☀️</span>
     </button>
@@ -193,11 +316,27 @@ body { font-family:'Roboto',sans-serif; background:var(--bg); color:var(--text);
         <div class="meta-item"><div class="meta-label">Retrait</div><div class="meta-value" style="color:#f87171" id="lppRetrait">—</div></div>
       </div>
     </div>
-    <div class="periods" id="lppPeriods">
-      <button class="period-btn" onclick="setLppPeriod('ytd',this)">YTD</button>
-      <button class="period-btn" onclick="setLppPeriod('1y',this)">1 an</button>
-      <button class="period-btn" onclick="setLppPeriod('5y',this)">5 ans</button>
-      <button class="period-btn active" onclick="setLppPeriod('all',this)">Tout</button>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div class="periods" id="lppPeriods" style="margin-bottom:0;flex:1">
+        <button class="period-btn" onclick="setLppPeriod('ytd',this)">YTD</button>
+        <button class="period-btn" onclick="setLppPeriod('1y',this)">1 an</button>
+        <button class="period-btn" onclick="setLppPeriod('5y',this)">5 ans</button>
+        <button class="period-btn active" onclick="setLppPeriod('all',this)">Tout</button>
+      </div>
+      <button class="add-btn" onclick="openModal('lppModal')" style="margin-left:8px;flex-shrink:0">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Entrée
+      </button>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="card-title" style="margin-bottom:0">Données saisies</div>
+        <div style="display:flex;gap:8px">
+          <button onclick="exportData('lpp')" style="font-size:10px;padding:4px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--muted);cursor:pointer;font-family:Roboto,sans-serif">Export</button>
+          <button onclick="importData('lpp')" style="font-size:10px;padding:4px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--muted);cursor:pointer;font-family:Roboto,sans-serif">Import</button>
+        </div>
+      </div>
+      <div id="lppDataList" style="max-height:180px;overflow-y:auto"></div>
     </div>
     <div class="card"><div class="card-title">Évolution du capital</div><div style="position:relative;height:160px"><canvas id="lppAreaChart"></canvas></div></div>
     <div class="card"><div class="card-title">Versements mensuels</div><div style="position:relative;height:140px"><canvas id="lppBarChart"></canvas></div></div>
@@ -415,6 +554,120 @@ body { font-family:'Roboto',sans-serif; background:var(--bg); color:var(--text);
 </div>
 
 <!-- Bottom Nav -->
+
+<!-- Page Investissements -->
+<div class="page" id="page-invest">
+  <div class="content">
+    <!-- Hero -->
+    <div class="hero" style="background:var(--card);border:1px solid var(--border);">
+      <div style="position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:radial-gradient(circle,rgba(167,139,250,.06) 0%,transparent 70%);border-radius:50%;pointer-events:none"></div>
+      <div class="hero-label">Portefeuille · <span style="color:#a78bfa" id="investMonth">—</span></div>
+      <div style="display:flex;align-items:baseline;gap:8px">
+        <div class="hero-value"><small>CHF </small><span id="investVal">—</span></div>
+        <div style="font-size:13px;font-weight:500" id="investPerfBadge">—</div>
+      </div>
+      <div class="hero-meta">
+        <div class="meta-item"><div class="meta-label">Investi</div><div class="meta-value" style="color:#60a5fa" id="investInvesti">—</div></div>
+        <div class="meta-item"><div class="meta-label">+/- value</div><div class="meta-value" id="investPlusValue">—</div></div>
+        <div class="meta-item"><div class="meta-label">Dividendes</div><div class="meta-value" style="color:#34d399" id="investDivid">—</div></div>
+        <div class="meta-item"><div class="meta-label">Réalisé</div><div class="meta-value" id="investRealise">—</div></div>
+      </div>
+    </div>
+
+    <!-- Période -->
+    <div class="periods" id="investPeriods">
+      <button class="period-btn" onclick="setInvestPeriod('ytd',this)">YTD</button>
+      <button class="period-btn" onclick="setInvestPeriod('1y',this)">1 an</button>
+      <button class="period-btn" onclick="setInvestPeriod('5y',this)">5 ans</button>
+      <button class="period-btn active" onclick="setInvestPeriod('all',this)">Tout</button>
+    </div>
+
+    <!-- 2 KPI cards -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div class="card" style="margin-bottom:0">
+        <div class="card-title" style="margin-bottom:8px">Performance</div>
+        <div style="font-size:24px;font-weight:300" id="investPerfPct">—</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px" id="investPerfChf">—</div>
+      </div>
+      <div class="card" style="margin-bottom:0">
+        <div class="card-title" style="margin-bottom:8px">Plus-values réalisées</div>
+        <div style="font-size:24px;font-weight:300" id="investRealise2">—</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px" id="investDivid2">dont CHF — dividendes</div>
+      </div>
+    </div>
+
+    <!-- Évolution valeur portefeuille -->
+    <div class="card">
+      <div class="card-title">Évolution du portefeuille</div>
+      <div style="position:relative;height:180px"><canvas id="investLineChart"></canvas></div>
+    </div>
+
+    <!-- Montant investi dans le temps -->
+    <div class="card">
+      <div class="card-title">Capital investi</div>
+      <div style="position:relative;height:150px"><canvas id="investBarChart"></canvas></div>
+    </div>
+
+    <!-- Allocation par ETF -->
+    <div class="card">
+      <div class="card-title">Allocation actuelle</div>
+      <div id="investAllocation"></div>
+    </div>
+
+    <!-- Portefeuille détail -->
+    <div class="card">
+      <div class="card-title">Positions actuelles</div>
+      <div id="investPositions"></div>
+    </div>
+
+    <!-- Historique transactions -->
+    <div class="card">
+      <div class="card-title">Historique transactions</div>
+      <div id="investTx"></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- LPP Modal -->
+<div class="modal-overlay" id="lppModal" onclick="if(event.target===this)closeModal('lppModal')">
+  <div class="modal">
+    <div class="modal-title">
+      Nouvelle entrée LPP
+      <button class="modal-close" onclick="closeModal('lppModal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Date</label>
+      <input type="date" class="form-input" id="lppFormDate">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Épargne (CHF)</label>
+        <input type="number" step="0.01" class="form-input" id="lppFormEpargne" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Intérêts (CHF)</label>
+        <input type="number" step="0.01" class="form-input" id="lppFormInterets" placeholder="0">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Rachat (CHF)</label>
+        <input type="number" step="0.01" class="form-input" id="lppFormRachat" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Retrait (CHF)</label>
+        <input type="number" step="0.01" class="form-input" id="lppFormRetrait" placeholder="0">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Total LPP (CHF)</label>
+      <input type="number" step="0.01" class="form-input" id="lppFormTotal" placeholder="0">
+    </div>
+    <button class="btn-primary" onclick="saveLppEntry()">Enregistrer</button>
+  </div>
+</div>
+
 <div class="bottom-nav">
   <button class="nav-btn active" id="nav-lpp" onclick="showPage('lpp')">
     <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="3"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg></span>LPP
@@ -428,13 +681,16 @@ body { font-family:'Roboto',sans-serif; background:var(--bg); color:var(--text);
   <button class="nav-btn" id="nav-total" onclick="showPage('total')">
     <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span>Total
   </button>
+  <button class="nav-btn" id="nav-invest" onclick="showPage('invest')">
+    <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><circle cx="12" cy="12" r="4"/></svg></span>Invest
+  </button>
 </div>
 
 <script>
 // ════════════════════════════════════════
 //  CONFIG
 // ════════════════════════════════════════
-const SHEET_ID = '1veNFl6D33IZojM4OztYz88LLjfR4DgycaWJQOoK1viU';
+// Google Sheets removed — using Google Drive
 const CASH_SOLDE_INITIAL = 43420.18;   // ← ton solde cash au 01.01.2024
 const SAVING_OBJECTIF    = 600;
 
@@ -541,6 +797,23 @@ let lppData      = DEMO_LPP;
 let data3A       = DEMO_3A;
 let salairesData = DEMO_SALAIRES;
 let depensesData = DEMO_DEPENSES;
+
+// Demo invest data
+const DEMO_INVEST = [
+  {date:'2024-01-15',ticker:'VWRL',nom:'Vanguard FTSE All-World',type:'achat',  quantite:10, prix:105.20,frais:9.90, devise:'CHF'},
+  {date:'2024-03-10',ticker:'VWRL',nom:'Vanguard FTSE All-World',type:'achat',  quantite:8,  prix:108.50,frais:9.90, devise:'CHF'},
+  {date:'2024-06-25',ticker:'CSPX',nom:'iShares Core S&P 500',   type:'achat',  quantite:5,  prix:485.00,frais:9.90, devise:'USD'},
+  {date:'2024-09-15',ticker:'VWRL',nom:'Vanguard FTSE All-World',type:'dividende',quantite:0,prix:0,     frais:0,    devise:'CHF', montant:38.40},
+  {date:'2024-12-10',ticker:'VWRL',nom:'Vanguard FTSE All-World',type:'achat',  quantite:5,  prix:115.30,frais:9.90, devise:'CHF'},
+  {date:'2025-03-20',ticker:'CSPX',nom:'iShares Core S&P 500',   type:'vente',  quantite:2,  prix:510.00,frais:9.90, devise:'USD'},
+  {date:'2025-06-25',ticker:'VWRL',nom:'Vanguard FTSE All-World',type:'dividende',quantite:0,prix:0,     frais:0,    devise:'CHF', montant:52.10},
+  {date:'2025-09-05',ticker:'CSPX',nom:'iShares Core S&P 500',   type:'achat',  quantite:3,  prix:530.00,frais:9.90, devise:'USD'},
+  {date:'2025-11-20',ticker:'VWRL',nom:'Vanguard FTSE All-World',type:'achat',  quantite:6,  prix:118.50,frais:9.90, devise:'CHF'},
+];
+let investData   = DEMO_INVEST;
+let investPeriod = 'all';
+let investLineC  = null, investBarC = null;
+
 let lppPeriod    = 'all';
 let p3aPeriod    = 'all';
 let cashPeriod   = 'all';
@@ -550,6 +823,8 @@ let cashLineC = null, cashSavingC = null, cashAnnualC = null;
 let p3aAreaC = null, p3aBarC = null;
 let annualMode = 'comparaison';
 let annualYtd  = false;
+let totalPeriod  = 'all';
+let totalAreaC   = null;
 
 // ════════════════════════════════════════
 //  UTILS
@@ -603,6 +878,7 @@ function showPage(name) {
   if (name === '3a') renderP3a();
   if (name === 'total') renderTotal();
   if (name === 'transactions') { txShortcut('30j'); }
+  if (name === 'invest') renderInvest();
 }
 
 // ════════════════════════════════════════
@@ -1191,8 +1467,6 @@ function annualChartOptions(tooltipBg, tooltipBorder, gridColor, maxTicks) {
 // ════════════════════════════════════════
 //  TOTAL
 // ════════════════════════════════════════
-let totalPeriod = 'all';
-let totalAreaC  = null;
 
 function setTotalPeriod(p, btn) {
   totalPeriod = p;
@@ -1439,85 +1713,698 @@ function renderTransactions() {
 // ════════════════════════════════════════
 //  FETCH GOOGLE SHEETS
 // ════════════════════════════════════════
-const API_KEY = 'AIzaSyBs505KcK4_vsviOp8g4lf3u561nQf95_8';
 
-async function fetchCSV(sheet) {
-  // Use official Google Sheets API v4 — no CORS issues
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(sheet)}?key=${API_KEY}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('API HTTP ' + res.status);
-  const json = await res.json();
-  if (!json.values || json.values.length < 2) throw new Error('Aucune donnée');
-  
-  // Skip header row, return data rows
-  const rows = json.values.slice(1);
-  return rows.map(cols => {
-    return cols.map(c => {
-      // Convert DD/MM/YYYY to YYYY-MM-DD
-      if (c && c.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-        const [d,m,y] = c.split('/');
-        return `${y}-${m}-${d}`;
-      }
-      // Remove Swiss thousand separators and normalize decimals
-      return c.replace(/[\u00a0\u202f']/g, '').replace(',', '.');
-    });
-  });
+
+
+// ════════════════════════════════════════
+//  LOCAL STORAGE
+// ════════════════════════════════════════
+const LS_KEYS = { lpp:'fin_lpp', sal:'fin_sal', dep:'fin_dep', p3a:'fin_3a', invest:'fin_invest' };
+
+function lsLoad(key) {
+  try { return JSON.parse(localStorage.getItem(LS_KEYS[key]) || 'null'); } catch { return null; }
+}
+function lsSave(key, data) {
+  try { localStorage.setItem(LS_KEYS[key], JSON.stringify(data)); } catch(e) { alert('Erreur sauvegarde: ' + e); }
 }
 
-async function init() {
-  const status = document.getElementById('globalStatus');
-  let loaded = 0;
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  // Pre-fill date with today
+  const dateInput = document.querySelector('#'+id+' input[type="date"]');
+  if (dateInput && !dateInput.value) {
+    const t = new Date();
+    dateInput.value = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+  }
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
 
+function exportData(key) {
+  const data = lsLoad(key);
+  if (!data || !data.length) { alert('Pas de données à exporter'); return; }
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `finances_${key}_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+
+function importData(key) {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = '.json';
+  inp.onchange = e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = ev => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (!Array.isArray(data)) throw new Error('Format invalide');
+        lsSave(key, data);
+        alert(`${data.length} entrées importées !`);
+        location.reload();
+      } catch(err) { alert('Erreur import: ' + err.message); }
+    };
+    r.readAsText(f);
+  };
+  inp.click();
+}
+
+function exportAllData() {
+  const all = {};
+  Object.keys(LS_KEYS).forEach(k => { const d = lsLoad(k); if (d) all[k] = d; });
+  const blob = new Blob([JSON.stringify(all, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `finances_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+
+// ── LPP local storage ──
+function saveLppEntry() {
+  const date    = document.getElementById('lppFormDate').value;
+  const epargne = parseFloat(document.getElementById('lppFormEpargne').value) || 0;
+  const interets= parseFloat(document.getElementById('lppFormInterets').value) || 0;
+  const rachat  = parseFloat(document.getElementById('lppFormRachat').value) || 0;
+  const retrait = parseFloat(document.getElementById('lppFormRetrait').value) || 0;
+  const total   = parseFloat(document.getElementById('lppFormTotal').value) || 0;
+  if (!date) { alert('Date obligatoire'); return; }
+  if (!total) { alert('Le total LPP est obligatoire'); return; }
+
+  const existing = lsLoad('lpp') || [];
+  const idx = existing.findIndex(d => d.date === date);
+  const entry = { date, epargne, interets, rachat, retrait, total };
+  if (idx >= 0) existing[idx] = entry; else existing.push(entry);
+  existing.sort((a,b) => a.date.localeCompare(b.date));
+  lsSave('lpp', existing);
+
+  // Clear form
+  ['lppFormEpargne','lppFormInterets','lppFormRachat','lppFormRetrait','lppFormTotal'].forEach(id => document.getElementById(id).value = '');
+  closeModal('lppModal');
+  // Apply to in-memory lppData
+  const lppLocal = lsLoad('lpp') || [];
+  if (lppLocal.length) lppData = lppLocal;
+  driveSaveAll();
+  renderLpp();
+}
+
+function deleteLppEntry(date) {
+  if (!confirm('Supprimer cette entrée ?')) return;
+  const data = (lsLoad('lpp') || []).filter(d => d.date !== date);
+  lsSave('lpp', data);
+  lppData = data;
+  driveSaveAll();
+  renderLpp();
+}
+
+function renderLppDataList() {
+  const data = lsLoad('lpp') || [];
+  const el = document.getElementById('lppDataList');
+  if (!el) return;
+  if (!data.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:11px;text-align:center;padding:12px">Aucune donnée locale — utilise Google Sheets ou ajoute une entrée</div>';
+    return;
+  }
+  const sorted = [...data].sort((a,b) => b.date.localeCompare(a.date));
+  el.innerHTML = sorted.map(d => `
+    <div class="data-row">
+      <div>
+        <div style="color:var(--muted);font-size:10px">${new Date(d.date).toLocaleDateString('fr-CH',{month:'short',year:'numeric'})}</div>
+        <div>Total: <strong>CHF ${fmt(d.total)}</strong> · Ép: ${fmt(d.epargne)} · Int: ${fmt(d.interets)}</div>
+      </div>
+      <button class="btn-danger" onclick="deleteLppEntry('${d.date}')">✕</button>
+    </div>`).join('');
+}
+
+function loadLocalData() {
   // LPP
-  try {
-    const rows = await fetchCSV('lpp');
-    console.log('RAW rows[0]:', rows[0]);
-    console.log('RAW rows[1]:', rows[1]);
-    const parsed = rows.map(c=>({date:c[0],epargne:parseFloat(c[1])||0,interets:parseFloat(c[2])||0,rachat:parseFloat(c[3])||0,retrait:parseFloat(c[4])||0,total:parseFloat(c[5])||0})).filter(d=>d.date&&d.total>0);
-    console.log('PARSED count:', parsed.length, 'first:', parsed[0]);
-    if (parsed.length) { lppData = parsed; loaded++; }
-    else { status.textContent = 'Sheet lu mais 0 lignes valides'; status.style.color='#f87171'; }
-  } catch(e) { status.textContent = 'Erreur LPP: '+e.message; status.style.color='#f87171'; console.error('LPP error:', e); }
+  const lppLocal = lsLoad('lpp');
+  if (lppLocal && lppLocal.length) {
+    // Merge with demo structure: local overrides demo
+    lppData = [lppData[0], ...lppLocal]; // keep capital initial
+    lppData = lppLocal; // just use local
+  }
+  renderLppDataList();
+}
 
-  // Salaires
-  try {
-    const rows = await fetchCSV('salaires');
-    const parsed = rows.map(c=>({date:c[0],montant:parseFloat(c[1])||0})).filter(d=>d.date&&d.montant>0);
-    if (parsed.length) { salairesData = parsed; loaded++; }
-  } catch(e) {}
+// ════════════════════════════════════════
+//  INVESTISSEMENTS
+// ════════════════════════════════════════
+// Taux de change approximatifs (USD→CHF) — mise à jour via Yahoo Finance
+const FX = { CHF: 1, USD: 0.90, EUR: 0.95 };
 
-  // Dépenses
-  try {
-    const rows = await fetchCSV('depenses');
-    const parsed = rows.map(c=>({date:c[0],perso:parseFloat(c[1])||0,commun:parseFloat(c[2])||0})).filter(d=>d.date&&(d.perso>0||d.commun>0));
-    if (parsed.length) { depensesData = parsed; loaded++; }
-  } catch(e) {}
+// Prix actuels fetché via Yahoo Finance
+const livePrice = {};
 
-  // 3A sheet
-  try {
-    const rows = await fetchCSV('3a');
-    const toNum = v => parseFloat((v||'0').replace(/[\u00a0\u202f'\s]/g,'').replace(',','.')) || 0;
-    const parsed = rows.map(c=>({
-      date:       c[0] || '',
-      versement:  toNum(c[1]),
-      dividendes: toNum(c[2]),
-      rendement:  toNum(c[3]),
-      retrait:    toNum(c[4]),
-      total:      toNum(c[5]),
-    })).filter(d => d.date && d.date.match(/\d{4}-\d{2}-\d{2}/));
-    console.log('3A parsed:', parsed.length, 'rows', parsed.slice(-3));
-    if (parsed.length) { data3A = parsed; loaded++; }
-  } catch(e) { console.warn('3A fetch error', e); }
+async function fetchLivePrices(tickers) {
+  for (const t of tickers) {
+    try {
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${t}?interval=1d&range=1d`;
+      const r = await fetch(url);
+      const d = await r.json();
+      const p = d?.chart?.result?.[0]?.meta?.regularMarketPrice;
+      const cur = d?.chart?.result?.[0]?.meta?.currency || 'USD';
+      if (p) livePrice[t] = { price: p, currency: cur };
+    } catch(e) { console.warn('Price fetch failed for', t); }
+  }
+}
 
-  if (loaded > 0) {
-    status.style.color = '#34d399';
-    status.textContent = `● Google Sheets · ${new Date().toLocaleDateString('fr-CH')}`;
-  } else if (!status.textContent.startsWith('Erreur')) {
-    status.style.color = '#5a5a72';
-    status.textContent = 'Données de démonstration';
+function setInvestPeriod(p, btn) {
+  investPeriod = p;
+  document.querySelectorAll('#page-invest .period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderInvest();
+}
+
+function toChf(amount, devise) {
+  return amount * (FX[devise] || 1);
+}
+
+async function renderInvest() {
+  // Filter by period
+  const now = new Date();
+  let cutoff = null;
+  if (investPeriod === 'ytd')  cutoff = new Date(now.getFullYear(), 0, 1);
+  else if (investPeriod === '1y') { cutoff = new Date(now); cutoff.setFullYear(now.getFullYear()-1); }
+  else if (investPeriod === '5y') { cutoff = new Date(now); cutoff.setFullYear(now.getFullYear()-5); }
+
+  // All data (portfolio state always uses all data, period affects charts/perf)
+  const allTx = [...investData].sort((a,b) => a.date.localeCompare(b.date));
+  const filTx = cutoff ? allTx.filter(d => new Date(d.date) >= cutoff) : allTx;
+
+  // ── Compute portfolio positions (always full history) ──
+  const positions = {};  // ticker → { quantite, coutMoyen, totalInvesti, totalFrais, devise }
+  let totalRealise = 0;
+  let totalDivid   = 0;
+
+  allTx.forEach(tx => {
+    if (tx.type === 'achat') {
+      if (!positions[tx.ticker]) positions[tx.ticker] = { quantite:0, totalInvesti:0, frais:0, nom:tx.nom, devise:tx.devise };
+      const p = positions[tx.ticker];
+      p.quantite     += tx.quantite;
+      p.totalInvesti += toChf(tx.quantite * tx.prix, tx.devise);
+      p.frais        += toChf(tx.frais, tx.devise);
+    } else if (tx.type === 'vente') {
+      if (positions[tx.ticker]) {
+        const p = positions[tx.ticker];
+        const coutMoyen = p.quantite > 0 ? p.totalInvesti / p.quantite : 0;
+        const pv = toChf(tx.quantite * tx.prix - tx.frais, tx.devise) - coutMoyen * tx.quantite;
+        totalRealise += pv;
+        p.totalInvesti -= coutMoyen * tx.quantite;
+        p.quantite     -= tx.quantite;
+        if (p.quantite <= 0) { p.quantite = 0; p.totalInvesti = 0; }
+      }
+    } else if (tx.type === 'dividende') {
+      totalDivid += toChf(tx.montant || (tx.quantite * tx.prix), tx.devise);
+    }
+  });
+
+  // Period-filtered metrics
+  const filAchats  = filTx.filter(t => t.type === 'achat');
+  const filVentes  = filTx.filter(t => t.type === 'vente');
+  const filDivid   = filTx.filter(t => t.type === 'dividende');
+  const periodDivid = filDivid.reduce((s,t) => s + toChf(t.montant || (t.quantite*t.prix), t.devise), 0);
+  const periodRealise = (() => {
+    const pos2 = {};
+    let real = 0;
+    filTx.forEach(tx => {
+      if (tx.type === 'achat') {
+        if (!pos2[tx.ticker]) pos2[tx.ticker] = { quantite:0, totalInvesti:0, devise:tx.devise };
+        pos2[tx.ticker].quantite     += tx.quantite;
+        pos2[tx.ticker].totalInvesti += toChf(tx.quantite * tx.prix, tx.devise);
+      } else if (tx.type === 'vente' && pos2[tx.ticker]) {
+        const p2 = pos2[tx.ticker];
+        const cm = p2.quantite > 0 ? p2.totalInvesti / p2.quantite : 0;
+        real += toChf(tx.quantite * tx.prix - tx.frais, tx.devise) - cm * tx.quantite;
+        p2.totalInvesti -= cm * tx.quantite;
+        p2.quantite     -= tx.quantite;
+      }
+    });
+    return real;
+  })();
+
+  // ── Fetch live prices ──
+  const activeTickers = Object.keys(positions).filter(t => positions[t].quantite > 0);
+  // Map ticker to Yahoo symbol (VWRL → VWRL.L, CSPX → CSPX.L etc.)
+  const yahooMap = t => {
+    const overrides = { 'VWRL':'VWRL.L','CSPX':'CSPX.L','IWDA':'IWDA.AS','EIMI':'EIMI.L','SWRD':'SWRD.SW' };
+    return overrides[t] || t;
+  };
+  await fetchLivePrices(activeTickers.map(yahooMap));
+
+  // ── Compute current portfolio value ──
+  let totalValeurActuelle = 0;
+  let totalCoutBase       = 0;
+  const posDetails = [];
+  Object.entries(positions).forEach(([ticker, p]) => {
+    if (p.quantite <= 0) return;
+    const ySym  = yahooMap(ticker);
+    const live  = livePrice[ySym];
+    const prix  = live ? live.price : null;
+    const devise = live ? live.currency : p.devise;
+    const valActuelle = prix ? toChf(p.quantite * prix, devise) : null;
+    const coutBase    = p.totalInvesti;
+    const pv          = valActuelle !== null ? valActuelle - coutBase : null;
+    const pvPct       = (pv !== null && coutBase > 0) ? pv/coutBase*100 : null;
+    totalCoutBase       += coutBase;
+    if (valActuelle !== null) totalValeurActuelle += valActuelle;
+    posDetails.push({ ticker, nom:p.nom, quantite:p.quantite, prix, devise, valActuelle, coutBase, pv, pvPct });
+  });
+
+  const totalPV    = totalValeurActuelle - totalCoutBase;
+  const totalPVPct = totalCoutBase > 0 ? totalPV / totalCoutBase * 100 : 0;
+
+  // ── Hero ──
+  document.getElementById('investMonth').textContent    = new Date().toLocaleDateString('fr-CH',{month:'short',year:'2-digit'});
+  document.getElementById('investVal').textContent      = fmt(totalValeurActuelle);
+  document.getElementById('investInvesti').textContent  = 'CHF ' + fmt(totalCoutBase);
+  document.getElementById('investDivid').textContent    = 'CHF ' + fmt(totalDivid);
+  document.getElementById('investRealise').textContent  = (totalRealise>=0?'+':'') + 'CHF ' + fmt(totalRealise);
+  document.getElementById('investRealise').style.color  = totalRealise >= 0 ? '#34d399' : '#f87171';
+  const pvEl = document.getElementById('investPlusValue');
+  pvEl.textContent = (totalPV>=0?'+':'') + 'CHF ' + fmt(totalPV);
+  pvEl.style.color = totalPV >= 0 ? '#34d399' : '#f87171';
+  const badgeEl = document.getElementById('investPerfBadge');
+  badgeEl.textContent = (totalPVPct>=0?'+':'') + totalPVPct.toFixed(1) + '%';
+  badgeEl.style.color = totalPVPct >= 0 ? '#34d399' : '#f87171';
+
+  // ── KPI cards ──
+  document.getElementById('investPerfPct').textContent = (totalPVPct>=0?'+':'') + totalPVPct.toFixed(2) + '%';
+  document.getElementById('investPerfPct').style.color = totalPVPct >= 0 ? '#34d399' : '#f87171';
+  document.getElementById('investPerfChf').textContent = (totalPV>=0?'▲ +':' ▼ ') + 'CHF ' + fmt(totalPV) + ' latent';
+  document.getElementById('investRealise2').textContent = (periodRealise>=0?'+':'') + 'CHF ' + fmt(periodRealise);
+  document.getElementById('investRealise2').style.color = periodRealise >= 0 ? '#34d399' : '#f87171';
+  document.getElementById('investDivid2').textContent   = 'dont CHF ' + fmt(periodDivid) + ' dividendes';
+
+  // ── Line chart — évolution valeur (approximation par achats cumulés + PV latente linéaire) ──
+  const monthSet = {};
+  let cumInvesti = 0;
+  allTx.filter(t=>t.type==='achat').forEach(tx => {
+    const mk = monthKey(tx.date);
+    cumInvesti += toChf(tx.quantite * tx.prix + tx.frais, tx.devise);
+    monthSet[mk] = (monthSet[mk]||0);
+    monthSet[mk] = cumInvesti;
+  });
+  // Also subtract sold capital
+  allTx.filter(t=>t.type==='vente').forEach(tx => {
+    const mk = monthKey(tx.date);
+    // Approximate: reduce invested
+  });
+  const chartMonths = Object.keys(monthSet).sort();
+  const filChartMonths = cutoff ? chartMonths.filter(m => new Date(m+'-01') >= cutoff) : chartMonths;
+
+  if (investLineC) investLineC.destroy();
+  const lCtx = document.getElementById('investLineChart').getContext('2d');
+  const grad = lCtx.createLinearGradient(0,0,0,180);
+  grad.addColorStop(0,'rgba(167,139,250,.4)'); grad.addColorStop(1,'rgba(167,139,250,.02)');
+  investLineC = new Chart(lCtx, {
+    type:'line',
+    data:{ labels: filChartMonths.map(m=>fmtDate(m+'-01')), datasets:[
+      { label:'Capital investi', data:filChartMonths.map(m=>monthSet[m]||0),
+        borderColor:'#a78bfa', backgroundColor:grad, fill:true, tension:0.4, pointRadius:0, borderWidth:2 }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{
+        backgroundColor:document.body.classList.contains('light')?'#fff':'#1a1a25',
+        borderColor:document.body.classList.contains('light')?'#e0e0ea':'#3a3a50', borderWidth:1,
+        titleColor:'#a78bfa', bodyColor:'#e2e2ec',
+        callbacks:{ label: c => `CHF ${fmt(c.raw)}` }
+      }},
+      scales:{
+        x:{grid:{display:false},ticks:{color:C.muted,font:{family:'Roboto',size:9},maxTicksLimit:8},border:{display:false}},
+        y:{grid:{color:document.body.classList.contains('light')?'#f0f0f6':'#1a1a1f'},ticks:{color:C.muted,font:{family:'Roboto',size:9},callback:v=>`${(v/1000).toFixed(0)}k`,maxTicksLimit:5},border:{display:false}}
+      }
+    }
+  });
+
+  // ── Bar chart — achats par mois ──
+  const barMonths = {};
+  allTx.forEach(tx => {
+    const mk = monthKey(tx.date);
+    if (!barMonths[mk]) barMonths[mk] = { achat:0, vente:0, dividende:0 };
+    if (tx.type==='achat')     barMonths[mk].achat     += toChf(tx.quantite*tx.prix+tx.frais, tx.devise);
+    if (tx.type==='vente')     barMonths[mk].vente     += toChf(tx.quantite*tx.prix-tx.frais, tx.devise);
+    if (tx.type==='dividende') barMonths[mk].dividende += toChf(tx.montant||(tx.quantite*tx.prix), tx.devise);
+  });
+  const barKeys = Object.keys(barMonths).sort();
+  const filBarKeys = cutoff ? barKeys.filter(m => new Date(m+'-01') >= cutoff) : barKeys;
+
+  if (investBarC) investBarC.destroy();
+  investBarC = new Chart(document.getElementById('investBarChart').getContext('2d'), {
+    type:'bar',
+    data:{ labels: filBarKeys.map(m=>fmtDate(m+'-01')), datasets:[
+      { label:'Achats',     data:filBarKeys.map(m=>barMonths[m]?.achat||0),     backgroundColor:'rgba(96,165,250,.8)',   borderRadius:0, stack:'s' },
+      { label:'Dividendes', data:filBarKeys.map(m=>barMonths[m]?.dividende||0), backgroundColor:'rgba(52,211,153,.8)',   borderRadius:0, stack:'s' },
+      { label:'Ventes',     data:filBarKeys.map(m=>-(barMonths[m]?.vente||0)),  backgroundColor:'rgba(248,113,113,.8)',  borderRadius:3, stack:'s', borderSkipped:'bottom' },
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      interaction:{intersect:false,mode:'index'},
+      plugins:{
+        legend:{labels:{color:C.muted,font:{family:'Roboto',size:9},boxWidth:8,boxHeight:8,padding:8}},
+        tooltip:{ backgroundColor:document.body.classList.contains('light')?'#fff':'#1a1a25',
+          borderColor:document.body.classList.contains('light')?'#e0e0ea':'#3a3a50',borderWidth:1,
+          titleColor:'#a78bfa',bodyColor:'#e2e2ec',
+          callbacks:{ label: c => `${c.dataset.label}: CHF ${fmt(Math.abs(c.raw))}` }
+        }
+      },
+      scales:{
+        x:{stacked:true,grid:{display:false},ticks:{color:C.muted,font:{family:'Roboto',size:9},maxTicksLimit:8},border:{display:false}},
+        y:{stacked:true,grid:{color:document.body.classList.contains('light')?'#f0f0f6':'#1a1a1f'},ticks:{color:C.muted,font:{family:'Roboto',size:9},callback:v=>`${(v/1000).toFixed(0)}k`,maxTicksLimit:5},border:{display:false}}
+      },
+      barThickness: filBarKeys.length > 18 ? 8 : 14
+    }
+  });
+
+  // ── Allocation par ETF ──
+  const allocEl = document.getElementById('investAllocation');
+  if (posDetails.length === 0) { allocEl.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px">Aucune position active</div>'; }
+  else {
+    const colors = ['#a78bfa','#60a5fa','#34d399','#fb923c','#f87171','#fbbf24'];
+    allocEl.innerHTML = posDetails.map((p,i) => {
+      const pct = totalValeurActuelle > 0 && p.valActuelle ? (p.valActuelle/totalValeurActuelle*100) : 0;
+      const col = colors[i % colors.length];
+      return `<div class="split-row">
+        <div class="split-header">
+          <div class="split-left"><div class="split-dot" style="background:${col}"></div><strong>${p.ticker}</strong>&nbsp;<span style="color:var(--muted);font-size:10px">${p.nom}</span></div>
+          <div class="split-right" style="color:${col}">${p.valActuelle ? 'CHF '+fmt(p.valActuelle) : '—'}<span class="split-pct">${pct.toFixed(1)}%</span></div>
+        </div>
+        <div class="split-bar-bg"><div class="split-bar-fill" style="width:${pct}%;background:${col}"></div></div>
+      </div>`;
+    }).join('');
   }
 
+  // ── Positions détail ──
+  const posEl = document.getElementById('investPositions');
+  if (posDetails.length === 0) { posEl.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px">Aucune position</div>'; }
+  else {
+    const colors = ['#a78bfa','#60a5fa','#34d399','#fb923c','#f87171','#fbbf24'];
+    posEl.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">` +
+      posDetails.map((p,i) => {
+        const col = colors[i % colors.length];
+        const pvColor = p.pv === null ? 'var(--muted)' : p.pv >= 0 ? '#34d399' : '#f87171';
+        return `<div style="background:var(--bg3);border-radius:14px;padding:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div style="font-weight:500;color:${col};font-size:13px">${p.ticker}</div>
+            <div style="font-size:10px;color:var(--muted)">${p.quantite} parts</div>
+          </div>
+          <div style="font-size:18px;font-weight:300;margin-bottom:4px">${p.prix ? p.prix.toFixed(2) + ' ' + p.devise : '—'}</div>
+          <div style="font-size:11px;color:${pvColor}">${p.pv!==null?(p.pv>=0?'▲ +':'▼ ')+'CHF '+fmt(p.pv)+' ('+p.pvPct.toFixed(1)+'%)':'Prix non disponible'}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px">Base: CHF ${fmt(p.coutBase)}</div>
+        </div>`;
+      }).join('') + `</div>`;
+  }
+
+  // ── Historique transactions ──
+  const txEl = document.getElementById('investTx');
+  const sortedTx = [...filTx].sort((a,b) => b.date.localeCompare(a.date));
+  if (!sortedTx.length) { txEl.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px">Aucune transaction</div>'; }
+  else {
+    const typeColor = { achat:'#60a5fa', vente:'#f87171', dividende:'#34d399' };
+    const typeLabel = { achat:'Achat', vente:'Vente', dividende:'Dividende' };
+    txEl.innerHTML = sortedTx.map(tx => {
+      const montantCHF = tx.type==='dividende'
+        ? toChf(tx.montant||(tx.quantite*tx.prix), tx.devise)
+        : toChf(tx.quantite*tx.prix + (tx.type==='achat'?tx.frais:-tx.frais), tx.devise);
+      const sign = tx.type==='achat' ? '-' : '+';
+      return `<div class="tx-row">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:8px;height:8px;border-radius:50%;background:${typeColor[tx.type]||'var(--muted)'};flex-shrink:0"></div>
+          <div>
+            <div style="font-size:11px;color:var(--muted)">${new Date(tx.date).toLocaleDateString('fr-CH',{day:'numeric',month:'short',year:'numeric'})}</div>
+            <div style="font-size:12px">${typeLabel[tx.type]||tx.type} · <strong>${tx.ticker}</strong>${tx.type!=='dividende'?' · '+tx.quantite+' × '+tx.prix+' '+tx.devise:''}</div>
+          </div>
+        </div>
+        <div style="font-size:13px;font-weight:500;color:${typeColor[tx.type]}">${sign}CHF ${fmt(montantCHF)}</div>
+      </div>`;
+    }).join('');
+  }
+}
+
+// ════════════════════════════════════════
+//  GOOGLE DRIVE SYNC
+// ════════════════════════════════════════
+const GDRIVE_CLIENT_ID = '870125849413-q1t7cij1t0ccojbjanlgek3kldfis51v.apps.googleusercontent.com'; // ← à remplir après config OAuth
+const GDRIVE_SCOPES    = 'https://www.googleapis.com/auth/drive.appdata';
+const GDRIVE_FILENAME  = 'finances_vf.json';
+let driveAccessToken   = null;
+let driveFileId        = null;
+
+// Structure par défaut du fichier Drive
+const DEFAULT_DATA = {
+  lpp:     [],
+  salaires:[],
+  depenses:[],
+  p3a:     [],
+  invest:  [],
+  meta:    { version:1, updatedAt: null }
+};
+
+// Token stocké en mémoire + sessionStorage pour la session
+function saveToken(token) {
+  driveAccessToken = token;
+  sessionStorage.setItem('drive_token', token);
+}
+function loadToken() {
+  driveAccessToken = driveAccessToken || sessionStorage.getItem('drive_token');
+  return driveAccessToken;
+}
+
+function driveSignIn() {
+  if (!GDRIVE_CLIENT_ID) {
+    alert('Client ID Google non configuré.\nSuis les instructions dans le README pour configurer OAuth.');
+    return;
+  }
+  if (loadToken()) { driveSyncAll(); return; }
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: GDRIVE_CLIENT_ID,
+    scope: GDRIVE_SCOPES,
+    callback: async (resp) => {
+      if (resp.error) { console.error('OAuth error:', resp); return; }
+      saveToken(resp.access_token);
+      updateDriveBtn(true);
+      await driveSyncAll();
+    }
+  });
+  client.requestAccessToken();
+}
+
+function updateDriveBtn(connected, syncing) {
+  const btn   = document.getElementById('driveBtn');
+  const label = document.getElementById('driveBtnLabel');
+  if (syncing) {
+    label.textContent = '⏳';
+    btn.style.borderColor = '#fb923c';
+    btn.style.color = '#fb923c';
+  } else if (connected) {
+    label.textContent = '✓ Drive';
+    btn.style.borderColor = '#34d399';
+    btn.style.color = '#34d399';
+  } else {
+    label.textContent = 'Drive';
+    btn.style.borderColor = 'var(--border)';
+    btn.style.color = 'var(--muted)';
+  }
+}
+
+async function driveRequest(method, url, body) {
+  const token = loadToken();
+  if (!token) throw new Error('Non connecté');
+  const opts = {
+    method,
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+  };
+  if (body !== undefined) opts.body = typeof body === 'string' ? body : JSON.stringify(body);
+  const res = await fetch(url, opts);
+  if (res.status === 401) {
+    driveAccessToken = null; sessionStorage.removeItem('drive_token');
+    updateDriveBtn(false);
+    throw new Error('Token expiré — reconnecte-toi');
+  }
+  return res;
+}
+
+async function driveFindFile() {
+  const res  = await driveRequest('GET',
+    `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name='${GDRIVE_FILENAME}'&fields=files(id,name,modifiedTime)`);
+  const json = await res.json();
+  return json.files?.[0] || null;
+}
+
+async function driveReadFile(fileId) {
+  const res  = await driveRequest('GET',
+    `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`);
+  return await res.json();
+}
+
+async function driveWriteFile(data) {
+  data.meta = { version:1, updatedAt: new Date().toISOString() };
+  const content = JSON.stringify(data);
+  const boundary = '-------fin_boundary';
+  const mime = 'application/json';
+
+  if (!driveFileId) {
+    // Create new file
+    const meta = JSON.stringify({ name: GDRIVE_FILENAME, parents: ['appDataFolder'] });
+    const body = `--${boundary}\r\nContent-Type: application/json\r\n\r\n${meta}\r\n--${boundary}\r\nContent-Type: ${mime}\r\n\r\n${content}\r\n--${boundary}--`;
+    const res  = await driveRequest('POST',
+      `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id`,
+      body);
+    const res2 = await fetch(`https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${loadToken()}`,
+        'Content-Type': `multipart/related; boundary="${boundary}"`
+      },
+      body
+    });
+    const json = await res2.json();
+    driveFileId = json.id;
+  } else {
+    // Update existing
+    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${loadToken()}`,
+        'Content-Type': mime
+      },
+      body: content
+    });
+  }
+}
+
+// Main sync: read from Drive, populate app data
+async function driveSyncAll() {
+  updateDriveBtn(true, true);
+  const status = document.getElementById('globalStatus');
+  try {
+    const file = await driveFindFile();
+    let driveData = DEFAULT_DATA;
+    if (file) {
+      driveFileId = file.id;
+      driveData   = await driveReadFile(file.id);
+      driveData   = { ...DEFAULT_DATA, ...driveData };
+    }
+    applyDriveData(driveData);
+    updateDriveBtn(true, false);
+    const ts = driveData.meta?.updatedAt ? new Date(driveData.meta.updatedAt).toLocaleDateString('fr-CH') : new Date().toLocaleDateString('fr-CH');
+    status.style.color  = '#34d399';
+    status.textContent  = `● Google Drive · ${ts}`;
+    refreshAllPages();
+  } catch(e) {
+    console.error('Drive sync error:', e);
+    updateDriveBtn(false);
+    status.style.color  = '#f87171';
+    status.textContent  = 'Erreur Drive: ' + e.message;
+  }
+}
+
+// Save all current app data back to Drive
+async function driveSaveAll() {
+  if (!loadToken()) return;
+  try {
+    const data = {
+      lpp:      lppData.filter(d=>d.date && d.total > 0),
+      salaires: salairesData,
+      depenses: depensesData,
+      p3a:      data3A,
+      invest:   investData.filter(d=>d.ticker),
+    };
+    await driveWriteFile(data);
+    const status = document.getElementById('globalStatus');
+    status.style.color = '#34d399';
+    status.textContent = `● Google Drive · ${new Date().toLocaleDateString('fr-CH')}`;
+  } catch(e) {
+    console.error('Drive save error:', e);
+    alert('Erreur sauvegarde Drive: ' + e.message);
+  }
+}
+
+function applyDriveData(d) {
+  if (d.lpp     && d.lpp.length)      lppData      = d.lpp;
+  if (d.salaires && d.salaires.length) salairesData = d.salaires;
+  if (d.depenses && d.depenses.length) depensesData = d.depenses;
+  if (d.p3a     && d.p3a.length)      data3A       = d.p3a;
+  if (d.invest  && d.invest.length)   investData   = d.invest;
+}
+
+function refreshAllPages() {
+  const active = document.querySelector('.page.active')?.id?.replace('page-','');
+  if (active === 'lpp')   renderLpp();
+  if (active === 'cash')  renderCash();
+  if (active === '3a')    renderP3a();
+  if (active === 'total') renderTotal();
+  if (active === 'invest') renderInvest();
+  renderLppDataList();
+}
+
+// ── Login page ──
+function showLoginPage() {
+  document.getElementById('loginPage').classList.add('visible');
+}
+function hideLoginPage() {
+  document.getElementById('loginPage').classList.remove('visible');
+}
+
+function loginWithGoogle() {
+  if (!GDRIVE_CLIENT_ID) {
+    alert('Client ID Google non configuré.\nAjoute ton Client ID OAuth dans le code.');
+    return;
+  }
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: GDRIVE_CLIENT_ID,
+    scope: GDRIVE_SCOPES,
+    callback: async (resp) => {
+      if (resp.error) { console.error('OAuth error:', resp); return; }
+      saveToken(resp.access_token);
+      hideLoginPage();
+      updateDriveBtn(true, true);
+      await driveSyncAll();
+    }
+  });
+  client.requestAccessToken({ prompt: 'select_account' });
+}
+
+function enterDemoMode() {
+  hideLoginPage();
+  const status = document.getElementById('globalStatus');
+  status.style.color = '#5a5a72';
+  status.textContent = 'Mode démo';
+  updateDriveBtn(false);
   renderLpp();
+}
+
+// Try silent reconnect on load — no popup, uses existing Google session
+async function tryAutoConnect() {
+  if (!GDRIVE_CLIENT_ID) return;
+  try {
+    await new Promise((resolve, reject) => {
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: GDRIVE_CLIENT_ID,
+        scope: GDRIVE_SCOPES,
+        prompt: '',  // silent — no popup if already consented
+        callback: async (resp) => {
+          if (resp.error) { reject(resp.error); return; }
+          saveToken(resp.access_token);
+          resolve();
+        }
+      });
+      client.requestAccessToken({ prompt: '' });
+    });
+    hideLoginPage();
+    updateDriveBtn(true, true);
+    await driveSyncAll();
+  } catch(e) {
+    // Silent auth failed — show login page
+    console.log('Silent auth failed, showing login page:', e);
+    showLoginPage();
+    updateDriveBtn(false);
+  }
+}
+
+function init() {
+  tryAutoConnect();
 }
 
 // Restore saved theme
